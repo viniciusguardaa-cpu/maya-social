@@ -1,10 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
-import { Menu, X } from "lucide-react"
+import { Menu, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useAuthStore } from "@/lib/store"
 
 export default function DashboardLayout({
     children,
@@ -12,6 +15,51 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const { data: session, status } = useSession()
+    const router = useRouter()
+    const { user, currentOrg, setUser, setCurrentOrg, setCurrentBrand } = useAuthStore()
+
+    useEffect(() => {
+        if (status === "loading") return
+
+        // If NextAuth session exists, sync with local store
+        if (session?.user) {
+            if (!user) {
+                setUser({
+                    id: (session.user as any).id || "google-user",
+                    email: session.user.email || "",
+                    name: session.user.name || "",
+                    avatar: session.user.image || undefined,
+                })
+                setCurrentOrg({
+                    id: "google-org-1",
+                    name: "Minha Organização",
+                    slug: "minha-org",
+                    role: "OWNER",
+                })
+                setCurrentBrand({
+                    id: "google-brand-1",
+                    name: "Minha Marca",
+                    slug: "minha-marca",
+                })
+            }
+            return
+        }
+
+        // If no NextAuth session and no local user, redirect to login
+        if (!user && !currentOrg) {
+            router.push("/login")
+        }
+    }, [session, status, user, currentOrg, router, setUser, setCurrentOrg, setCurrentBrand])
+
+    // Show loading while checking auth
+    if (status === "loading") {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
+    }
 
     return (
         <div className="flex h-screen overflow-hidden bg-background">
