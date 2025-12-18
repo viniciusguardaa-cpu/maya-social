@@ -4,7 +4,9 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  console.log('🔄 Starting NestJS application...');
   const app = await NestFactory.create(AppModule);
+  console.log('✅ NestFactory created');
 
   app.enableCors({
     origin: [
@@ -12,6 +14,8 @@ async function bootstrap() {
       'http://127.0.0.1:3000',
       /^http:\/\/127\.0\.0\.1:\d+$/,
       /^http:\/\/localhost:\d+$/,
+      'https://maya-social-web.vercel.app',
+      /\.vercel\.app$/,
     ],
     credentials: true,
   });
