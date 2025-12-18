@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,8 @@ import { useAuthStore } from "@/lib/store"
 
 export default function RegisterPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const plan = searchParams.get("plan") || "starter"
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [formData, setFormData] = useState({
@@ -21,7 +23,7 @@ export default function RegisterPage() {
         email: "",
         company: "",
     })
-    const { setUser, setCurrentOrg, setCurrentBrand, setToken } = useAuthStore()
+    const { setUser, setToken } = useAuthStore()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -40,25 +42,11 @@ export default function RegisterPage() {
                 avatar: undefined,
             }
 
-            const newOrg = {
-                id: `org-${Date.now()}`,
-                name: formData.company || `${formData.name}'s Workspace`,
-                slug: formData.company?.toLowerCase().replace(/\s+/g, '-') || 'workspace',
-                role: 'OWNER',
-            }
-
-            const newBrand = {
-                id: `brand-${Date.now()}`,
-                name: formData.company || 'Minha Marca',
-                slug: formData.company?.toLowerCase().replace(/\s+/g, '-') || 'minha-marca',
-            }
-
             setToken(`token-${Date.now()}`)
             setUser(newUser)
-            setCurrentOrg(newOrg)
-            setCurrentBrand(newBrand)
 
-            router.push("/dashboard")
+            // Redirect to onboarding with plan
+            router.push(`/onboarding?plan=${plan}`)
         } catch (err) {
             setError("Erro ao criar conta. Tente novamente.")
         } finally {
@@ -67,7 +55,13 @@ export default function RegisterPage() {
     }
 
     const handleGoogleSignup = () => {
-        signIn("google", { callbackUrl: "/dashboard" })
+        signIn("google", { callbackUrl: `/onboarding?plan=${plan}` })
+    }
+
+    const planNames: Record<string, string> = {
+        starter: "Starter - R$ 49/mês",
+        pro: "Pro - R$ 149/mês",
+        enterprise: "Enterprise - R$ 399/mês",
     }
 
     return (
@@ -85,7 +79,11 @@ export default function RegisterPage() {
                     <CardHeader>
                         <CardTitle className="text-2xl text-center">Criar Conta</CardTitle>
                         <CardDescription className="text-center">
-                            Comece seu teste grátis de 14 dias
+                            {plan !== "starter" ? (
+                                <>Plano selecionado: <strong className="text-primary">{planNames[plan]}</strong></>
+                            ) : (
+                                "Comece seu teste grátis de 14 dias"
+                            )}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">

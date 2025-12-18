@@ -110,10 +110,10 @@ export default function PricingPage() {
     const handleSubscribe = (plan: Plan) => {
         if (plan.id === "enterprise") {
             toast.info("Redirecionando para contato...")
+            window.open("mailto:contato@maya.com?subject=Plano Enterprise", "_blank")
             return
         }
-        toast.success(`Iniciando checkout do plano ${plan.name}...`)
-        // Aqui integraria com Stripe
+        router.push(`/register?plan=${plan.id}`)
     }
 
     return (
