@@ -1,0 +1,496 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ORGANIZAÇÕES E USUÁRIOS
+// ============================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brands Brand[]
+  users  UserOrganization[]
+
+  @@map("organizations")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  avatar        String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  organizations UserOrganization[]
+  approvals     Approval[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ============================================
+// RBAC - PERMISSÕES
+// ============================================
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  PRODUCER
+  SUPPORT
+}
+
+model UserOrganization {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role         @default(PRODUCER)
+  createdAt      DateTime     @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("user_organizations")
+}
+
+// ============================================
+// MARCAS E INTEGRAÇÕES
+// ============================================
+
+model Brand {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  logoUrl        String?
+  primaryColor   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  integrations     Integration[]
+  calendarMonths   CalendarMonth[]
+  contentItems     ContentItem[]
+  assets           Asset[]
+  conversations    Conversation[]
+  contentTemplates ContentTemplate[]
+
+  @@unique([organizationId, slug])
+  @@map("brands")
+}
+
+// ============================================
+// TEMPLATES DE CONTEÚDO
+// ============================================
+
+enum Recurrence {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+model ContentTemplate {
+  id          String      @id @default(cuid())
+  brandId     String
+  name        String
+  type        ContentType
+  dayOfWeek   Int
+  time        String
+  recurrence  Recurrence  @default(WEEKLY)
+  category    String?
+  isActive    Boolean     @default(true)
+  priority    Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId, isActive])
+  @@map("content_templates")
+}
+
+enum IntegrationType {
+  INSTAGRAM
+  FACEBOOK
+  WHATSAPP
+  GOOGLE_DRIVE
+}
+
+model Integration {
+  id           String          @id @default(cuid())
+  brandId      String
+  type         IntegrationType
+  accountId    String?
+  accountName  String?
+  accessToken  String?         @db.Text
+  refreshToken String?         @db.Text
+  expiresAt    DateTime?
+  metadata     Json?
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([brandId, type])
+  @@map("integrations")
+}
+
+// ============================================
+// CALENDÁRIO E CONTEÚDO
+// ============================================
+
+model CalendarMonth {
+  id        String   @id @default(cuid())
+  brandId   String
+  year      Int
+  month     Int
+  status    String   @default("DRAFT")
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand        Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  contentItems ContentItem[]
+
+  @@unique([brandId, year, month])
+  @@map("calendar_months")
+}
+
+enum ContentType {
+  FEED
+  REELS
+  STORIES
+  AD
+  CAROUSEL
+}
+
+enum ContentStatus {
+  PLANNED
+  BRIEFED
+  IN_PRODUCTION
+  READY
+  AWAITING_APPROVAL
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  MEASURED
+  CANCELLED
+}
+
+model ContentItem {
+  id              String        @id @default(cuid())
+  brandId         String
+  calendarMonthId String?
+  code            String        @unique
+  type            ContentType
+  status          ContentStatus @default(PLANNED)
+  scheduledAt     DateTime?
+  publishedAt     DateTime?
+  platformPostId  String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  brand         Brand          @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  calendarMonth CalendarMonth? @relation(fields: [calendarMonthId], references: [id])
+  brief         Brief?
+  assets        Asset[]
+  approvals     Approval[]
+  publication   Publication?
+  insights      Insight[]
+
+  @@index([brandId, scheduledAt])
+  @@map("content_items")
+}
+
+// ============================================
+// BRIEF E ROTEIRO
+// ============================================
+
+model Brief {
+  id            String   @id @default(cuid())
+  contentItemId String   @unique
+  title         String
+  objective     String?  @db.Text
+  targetAudience String? @db.Text
+  promise       String?  @db.Text
+  cta           String?
+  caption       String?  @db.Text
+  hashtags      String[]
+  script        Json?
+  props         String[]
+  guidelines    Json?
+  checklist     Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@map("briefs")
+}
+
+// ============================================
+// ASSETS (DRIVE)
+// ============================================
+
+enum AssetType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+
+enum AssetStatus {
+  UPLOADED
+  VALIDATING
+  VALID
+  INVALID
+  READY
+}
+
+model Asset {
+  id            String      @id @default(cuid())
+  brandId       String
+  contentItemId String?
+  code          String
+  type          AssetType
+  status        AssetStatus @default(UPLOADED)
+  driveFileId   String?
+  driveUrl      String?
+  fileName      String
+  mimeType      String?
+  size          Int?
+  width         Int?
+  height        Int?
+  duration      Int?
+  version       Int         @default(1)
+  validationErrors Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  brand       Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  contentItem ContentItem? @relation(fields: [contentItemId], references: [id])
+
+  @@index([brandId, code])
+  @@map("assets")
+}
+
+// ============================================
+// APROVAÇÕES E GOVERNANÇA
+// ============================================
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVISION_REQUESTED
+}
+
+model Approval {
+  id            String         @id @default(cuid())
+  contentItemId String
+  userId        String
+  status        ApprovalStatus @default(PENDING)
+  type          String
+  diff          Json?
+  reason        String?        @db.Text
+  createdAt     DateTime       @default(now())
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@map("approvals")
+}
+
+// ============================================
+// PUBLICAÇÃO
+// ============================================
+
+enum PublicationStatus {
+  PENDING
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CONFIRMED_MANUAL
+}
+
+model Publication {
+  id              String            @id @default(cuid())
+  contentItemId   String            @unique
+  status          PublicationStatus @default(PENDING)
+  platformPostId  String?
+  platformUrl     String?
+  scheduledAt     DateTime?
+  publishedAt     DateTime?
+  confirmedManual Boolean           @default(false)
+  confirmedBy     String?
+  confirmedAt     DateTime?
+  errorMessage    String?           @db.Text
+  metadata        Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@map("publications")
+}
+
+// ============================================
+// ANALYTICS / INSIGHTS
+// ============================================
+
+model Insight {
+  id            String   @id @default(cuid())
+  contentItemId String?
+  brandId       String?
+  date          DateTime @db.Date
+  reach         Int?
+  impressions   Int?
+  engagement    Int?
+  likes         Int?
+  comments      Int?
+  shares        Int?
+  saves         Int?
+  clicks        Int?
+  videoViews    Int?
+  videoRetention Float?
+  followersDelta Int?
+  ctr           Float?
+  cpc           Float?
+  cpm           Float?
+  spend         Float?
+  conversions   Int?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  contentItem ContentItem? @relation(fields: [contentItemId], references: [id])
+
+  @@index([contentItemId, date])
+  @@map("insights")
+}
+
+// ============================================
+// INBOX / DM
+// ============================================
+
+enum ConversationStatus {
+  OPEN
+  WAITING
+  RESOLVED
+  ESCALATED
+}
+
+model Conversation {
+  id              String             @id @default(cuid())
+  brandId         String
+  platformId      String
+  platform        String
+  participantId   String
+  participantName String?
+  participantAvatar String?
+  status          ConversationStatus @default(OPEN)
+  tags            String[]
+  assignedTo      String?
+  lastMessageAt   DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  brand    Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([brandId, platformId])
+  @@map("conversations")
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+model Message {
+  id             String           @id @default(cuid())
+  conversationId String
+  platformMsgId  String?
+  direction      MessageDirection
+  content        String           @db.Text
+  mediaUrl       String?
+  metadata       Json?
+  sentAt         DateTime         @default(now())
+  readAt         DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, sentAt])
+  @@map("messages")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entity     String
+  entityId   String?
+  oldData    Json?
+  newData    Json?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
