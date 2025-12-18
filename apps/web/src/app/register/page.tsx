@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator"
 import { Sparkles, Loader2, Mail, User, Building } from "lucide-react"
 import { useAuthStore } from "@/lib/store"
+import { saveRegisteredUser } from "@/lib/admin-utils"
 
 export default function RegisterPage() {
     const router = useRouter()
@@ -44,6 +45,15 @@ export default function RegisterPage() {
 
             setToken(`token-${Date.now()}`)
             setUser(newUser)
+
+            // Save to registered users for admin panel
+            saveRegisteredUser({
+                id: newUser.id,
+                name: newUser.name,
+                email: newUser.email,
+                company: formData.company,
+                plan: plan,
+            })
 
             // Redirect to onboarding with plan
             router.push(`/onboarding?plan=${plan}`)

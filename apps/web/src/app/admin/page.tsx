@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +32,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
+import { getRegisteredUsers, RegisteredUser } from "@/lib/admin-utils"
 
 interface Customer {
     id: string
@@ -48,17 +49,6 @@ interface Customer {
     trialEndsAt?: string
 }
 
-const mockCustomers: Customer[] = [
-    { id: "1", name: "João Silva", email: "joao@techstart.com", company: "TechStart", plan: "pro", status: "active", mrr: 149, users: 5, brands: 3, country: "BR", createdAt: "2024-10-15" },
-    { id: "2", name: "Maria Santos", email: "maria@foodiebox.com", company: "FoodieBox", plan: "enterprise", status: "active", mrr: 399, users: 15, brands: 8, country: "BR", createdAt: "2024-09-20" },
-    { id: "3", name: "Carlos Lima", email: "carlos@fitlife.com", company: "FitLife", plan: "starter", status: "trial", mrr: 0, users: 2, brands: 1, country: "PT", createdAt: "2025-01-10", trialEndsAt: "2025-01-24" },
-    { id: "4", name: "Ana Costa", email: "ana@modaplus.com", company: "Moda Plus", plan: "pro", status: "past_due", mrr: 149, users: 4, brands: 2, country: "BR", createdAt: "2024-08-05" },
-    { id: "5", name: "Pedro Oliveira", email: "pedro@greenco.com", company: "GreenCo", plan: "pro", status: "active", mrr: 149, users: 6, brands: 2, country: "BR", createdAt: "2024-11-01" },
-    { id: "6", name: "Julia Mendes", email: "julia@beautylab.com", company: "Beauty Lab", plan: "starter", status: "cancelled", mrr: 0, users: 1, brands: 1, country: "BR", createdAt: "2024-07-15" },
-    { id: "7", name: "Lucas Ferreira", email: "lucas@devagency.io", company: "Dev Agency", plan: "enterprise", status: "active", mrr: 399, users: 20, brands: 12, country: "US", createdAt: "2024-06-10" },
-    { id: "8", name: "Camila Rocha", email: "camila@wellness.co", company: "Wellness Co", plan: "pro", status: "active", mrr: 149, users: 3, brands: 2, country: "BR", createdAt: "2024-12-01" },
-]
-
 const planConfig = {
     starter: { label: "Starter", price: 49, color: "bg-slate-500" },
     pro: { label: "Pro", price: 149, color: "bg-blue-500" },
@@ -73,9 +63,15 @@ const statusConfig = {
 }
 
 export default function AdminPage() {
-    const [customers, setCustomers] = useState<Customer[]>(mockCustomers)
+    const [customers, setCustomers] = useState<Customer[]>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [filterStatus, setFilterStatus] = useState<string>("all")
+
+    // Load registered users from localStorage on mount
+    useEffect(() => {
+        const registeredUsers = getRegisteredUsers()
+        setCustomers(registeredUsers)
+    }, [])
 
     const filteredCustomers = customers.filter(c => {
         const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -305,9 +301,9 @@ export default function AdminPage() {
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-2">
                                                         <StatusIcon className={`h-4 w-4 ${customer.status === "active" ? "text-green-500" :
-                                                                customer.status === "trial" ? "text-amber-500" :
-                                                                    customer.status === "past_due" ? "text-red-500" :
-                                                                        "text-gray-500"
+                                                            customer.status === "trial" ? "text-amber-500" :
+                                                                customer.status === "past_due" ? "text-red-500" :
+                                                                    "text-gray-500"
                                                             }`} />
                                                         <span className="text-sm">{statusConfig[customer.status].label}</span>
                                                     </div>

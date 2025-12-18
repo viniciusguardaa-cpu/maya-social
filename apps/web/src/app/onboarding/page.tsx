@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sparkles, Building, Globe, Instagram, Loader2, Check, ArrowRight } from "lucide-react"
 import { useAuthStore } from "@/lib/store"
+import { saveRegisteredUser } from "@/lib/admin-utils"
 
 const steps = [
     { id: 1, title: "Sua Empresa", description: "Informações básicas" },
@@ -54,6 +55,17 @@ export default function OnboardingPage() {
 
             setCurrentOrg(newOrg)
             setCurrentBrand(newBrand)
+
+            // Save/update user in admin panel
+            if (user) {
+                saveRegisteredUser({
+                    id: user.id,
+                    name: user.name || formData.companyName,
+                    email: user.email,
+                    company: formData.companyName,
+                    plan: plan,
+                })
+            }
 
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000))
