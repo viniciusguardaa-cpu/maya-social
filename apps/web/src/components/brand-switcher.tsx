@@ -22,18 +22,17 @@ interface Brand {
     color?: string
 }
 
-const mockBrands: Brand[] = [
-    { id: "1", name: "Maya Agency", slug: "maya", color: "#8B5CF6" },
-    { id: "2", name: "TechStart", slug: "techstart", color: "#3B82F6" },
-    { id: "3", name: "FoodieBox", slug: "foodiebox", color: "#F97316" },
-    { id: "4", name: "FitLife", slug: "fitlife", color: "#10B981" },
-]
-
 export function BrandSwitcher() {
-    const { currentBrand, setCurrentBrand } = useAuthStore()
-    const [brands] = useState<Brand[]>(mockBrands)
+    const { currentBrand, setCurrentBrand, user } = useAuthStore()
 
-    const activeBrand = brands.find(b => b.id === currentBrand?.id) || brands[0]
+    // Use only the current brand from the store, no mock data
+    const brands: Brand[] = currentBrand ? [
+        { ...currentBrand, color: "#8B5CF6" }
+    ] : []
+
+    const activeBrand: Brand = currentBrand
+        ? { ...currentBrand, color: "#8B5CF6" }
+        : { id: "1", name: "Minha Marca", slug: "minha-marca", color: "#8B5CF6" }
 
     const handleSwitch = (brand: Brand) => {
         setCurrentBrand({ id: brand.id, name: brand.name, slug: brand.slug })
