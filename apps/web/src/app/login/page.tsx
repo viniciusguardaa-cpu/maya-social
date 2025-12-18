@@ -106,7 +106,13 @@ export default function LoginPage() {
                             </Button>
                         </form>
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="flex flex-col gap-2">
+                        <p className="text-sm text-center text-muted-foreground w-full">
+                            Não tem uma conta?{" "}
+                            <Link href="/register" className="text-primary font-medium hover:underline">
+                                Criar conta grátis
+                            </Link>
+                        </p>
                         <p className="text-xs text-center text-muted-foreground w-full">
                             Demo: use <strong>demo@maya.com</strong> para acessar
                         </p>
