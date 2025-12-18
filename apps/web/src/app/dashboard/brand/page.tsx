@@ -40,26 +40,51 @@ interface BrandSettings {
 }
 
 export default function BrandPage() {
-    const { currentBrand } = useAuthStore()
+    const { currentBrand, setCurrentBrand } = useAuthStore()
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
-    const [settings, setSettings] = useState<BrandSettings>({
-        name: currentBrand?.name || "Maya Brand",
-        slug: currentBrand?.slug || "maya-brand",
-        description: "Agência de marketing digital focada em resultados e criatividade.",
-        website: "https://maya.com.br",
-        instagram: "@mayaagencia",
-        primaryColor: "#8B5CF6",
-        secondaryColor: "#EC4899",
-        tone: "Profissional, criativo e acessível. Usamos linguagem clara e direta, com toques de humor quando apropriado.",
-        targetAudience: "Empreendedores e pequenas empresas que buscam crescer nas redes sociais. Idade: 25-45 anos.",
-        hashtags: "#maya #marketingdigital #socialmedia #growth #branding #criatividade",
-        bio: "🚀 Transformamos ideias em resultados\n📱 Gestão de redes sociais\n💡 Estratégias criativas\n📩 Fale conosco!",
-    })
+
+    // Load saved brand settings from localStorage
+    const getSavedSettings = (): BrandSettings => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(`brand-settings-${currentBrand?.id}`)
+            if (saved) return JSON.parse(saved)
+        }
+        return {
+            name: currentBrand?.name || "Minha Marca",
+            slug: currentBrand?.slug || "minha-marca",
+            description: "",
+            website: "",
+            instagram: "",
+            primaryColor: "#8B5CF6",
+            secondaryColor: "#EC4899",
+            tone: "",
+            targetAudience: "",
+            hashtags: "",
+            bio: "",
+        }
+    }
+
+    const [settings, setSettings] = useState<BrandSettings>(getSavedSettings)
 
     const handleSave = async () => {
         setSaving(true)
-        await new Promise(r => setTimeout(r, 1000))
+
+        // Save to localStorage
+        if (typeof window !== 'undefined' && currentBrand?.id) {
+            localStorage.setItem(`brand-settings-${currentBrand.id}`, JSON.stringify(settings))
+        }
+
+        // Update brand name in store
+        if (currentBrand && settings.name !== currentBrand.name) {
+            setCurrentBrand({
+                ...currentBrand,
+                name: settings.name,
+                slug: settings.slug,
+            })
+        }
+
+        await new Promise(r => setTimeout(r, 500))
         setSaving(false)
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
