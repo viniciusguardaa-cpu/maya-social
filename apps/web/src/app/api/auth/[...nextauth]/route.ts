@@ -8,15 +8,27 @@ const handler = NextAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         }),
     ],
+    secret: process.env.NEXTAUTH_SECRET,
+    session: {
+        strategy: "jwt",
+    },
     pages: {
         signIn: "/login",
     },
     callbacks: {
+        async jwt({ token, user, account }) {
+            if (account && user) {
+                token.accessToken = account.access_token
+                token.id = user.id
+            }
+            return token
+        },
         async session({ session, token }) {
             if (session.user) {
-                (session.user as any).id = token.sub
+                (session.user as any).id = token.id || token.sub;
+                (session.user as any).accessToken = token.accessToken;
             }
-            return session
+            return session;
         },
         async redirect({ url, baseUrl }) {
             if (url.startsWith("/")) return `${baseUrl}${url}`
@@ -24,6 +36,7 @@ const handler = NextAuth({
             return `${baseUrl}/dashboard`
         },
     },
+    debug: process.env.NODE_ENV === "development",
 })
 
 export { handler as GET, handler as POST }
