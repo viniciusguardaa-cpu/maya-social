@@ -25,5 +25,5 @@ EXPOSE 3001
 ENV PORT=3001
 ENV NODE_ENV=production
 
-# Start - sync db then run app (main.js is in dist/src/)
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/src/main.js"]
+# Start the app (db is already synced from previous deploys)
+CMD ["node", "dist/src/main.js"]
