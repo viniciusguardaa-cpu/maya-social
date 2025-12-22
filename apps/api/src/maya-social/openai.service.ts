@@ -7,7 +7,7 @@ export class OpenAIService {
   private readonly model = 'gpt-4-turbo-preview';
 
   constructor(private config: ConfigService) {
-    this.apiKey = this.config.get<string>('OPENAI_API_KEY');
+    this.apiKey = this.config.get<string>('OPENAI_API_KEY') || '';
   }
 
   async generateCreativeContent(briefing: any) {

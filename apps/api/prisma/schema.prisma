@@ -38,6 +38,8 @@ model User {
   organizations UserOrganization[]
   approvals     Approval[]
   auditLogs     AuditLog[]
+  socialRequests SocialRequest[]
+  brandPreferences BrandPreference?
 
   @@map("users")
 }
@@ -493,4 +495,112 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([userId, createdAt])
   @@map("audit_logs")
+}
+
+// ============================================
+// MAYA SOCIAL STUDIO
+// ============================================
+
+model SocialRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  postType     String
+  objective    String
+  mainIdea     String  @db.Text
+  
+  briefing     Json
+  generatedOutput Json
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  outputs      GeneratedOutput[]
+  preferences  BrandPreference?
+  
+  @@index([userId, createdAt])
+  @@map("social_requests")
+}
+
+model GeneratedOutput {
+  id              String   @id @default(cuid())
+  requestId       String
+  request         SocialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  headline        String   @db.VarChar(60)
+  subheadline     String   @db.VarChar(150)
+  cta             String   @db.VarChar(30)
+  copyVariations  Json
+  
+  visualStyle     String
+  colorPalette    Json
+  fontStyle       String
+  composition     String   @db.Text
+  
+  imagePrompt     String   @db.Text
+  imageUrl        String?
+  imageStatus     String   @default("pending")
+  
+  exportFormat    String
+  exportVariants  Json
+  
+  downloaded      Boolean  @default(false)
+  downloadedAt    DateTime?
+  published       Boolean  @default(false)
+  publishedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([requestId])
+  @@index([imageStatus])
+  @@map("generated_outputs")
+}
+
+model BrandPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  requestId       String   @unique
+  request         SocialRequest @relation(fields: [requestId], references: [id])
+  
+  brandName       String?
+  logoUrl         String?
+  
+  defaultStyle    String?
+  defaultTone     String?
+  colorPalette    Json?
+  fontStyle       String?
+  
+  voiceTone       String?  @db.Text
+  restrictions    String?  @db.Text
+  
+  totalRequests   Int      @default(0)
+  lastUsedAt      DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("brand_preferences")
+}
+
+model SocialAnalytics {
+  id              String   @id @default(cuid())
+  outputId        String
+  
+  impressions     Int?
+  reach           Int?
+  engagement      Int?
+  clicks          Int?
+  saves           Int?
+  shares          Int?
+  
+  variant         String?
+  
+  recordedAt      DateTime @default(now())
+  
+  @@index([outputId])
+  @@map("social_analytics")
 }
