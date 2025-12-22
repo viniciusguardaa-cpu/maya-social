@@ -23,7 +23,7 @@ const VISUAL_STYLES = [
 ] as const;
 
 const TONE_STYLES = [
-    { value: 'auto', label: 'Auto (IA Decide)' },
+    { value: 'auto', label: 'Auto (IA Decide)', description: undefined },
     { value: 'aggressive', label: 'Agressivo', description: 'Urgente, impactante' },
     { value: 'elegant', label: 'Elegante', description: 'Refinado, sutil' },
     { value: 'informative', label: 'Informativo', description: 'Educativo, claro' },
@@ -31,7 +31,7 @@ const TONE_STYLES = [
 ] as const;
 
 const FONT_STYLES = [
-    { value: 'auto', label: 'Auto (IA Decide)' },
+    { value: 'auto', label: 'Auto (IA Decide)', description: undefined },
     { value: 'modern', label: 'Moderna', description: 'Sans-serif, clean' },
     { value: 'serif', label: 'Serif', description: 'Clássica, elegante' },
     { value: 'bold', label: 'Bold', description: 'Forte, impactante' },
@@ -74,8 +74,8 @@ export function Step3Visual({ data, onChange }: Step3VisualProps) {
                             <label
                                 key={style.value}
                                 className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${data.style === style.value
-                                        ? 'border-purple-600 bg-purple-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-purple-600 bg-purple-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <RadioGroupItem value={style.value} className="mt-1" />
@@ -102,8 +102,8 @@ export function Step3Visual({ data, onChange }: Step3VisualProps) {
                             <label
                                 key={tone.value}
                                 className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${data.tone === tone.value
-                                        ? 'border-purple-600 bg-purple-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-purple-600 bg-purple-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <RadioGroupItem value={tone.value} className="mt-1" />
@@ -216,8 +216,8 @@ export function Step3Visual({ data, onChange }: Step3VisualProps) {
                             <label
                                 key={font.value}
                                 className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${data.fontStyle === font.value
-                                        ? 'border-purple-600 bg-purple-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-purple-600 bg-purple-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <RadioGroupItem value={font.value} className="mt-1" />
