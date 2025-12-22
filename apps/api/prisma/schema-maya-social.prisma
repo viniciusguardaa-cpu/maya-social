@@ -1,0 +1,128 @@
+// MAYA Social Studio - Database Schema
+// Add these models to your main schema.prisma file
+
+model SocialRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Post Configuration
+  postType     String  // story, feed, carousel, reel_cover
+  objective    String  // sell, event, engagement, authority
+  mainIdea     String  @db.Text
+  
+  // Complete Briefing (JSON)
+  briefing     Json
+  
+  // Generated Output (JSON)
+  generatedOutput Json
+  
+  // Metadata
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  outputs      GeneratedOutput[]
+  preferences  BrandPreference?
+  
+  @@index([userId, createdAt])
+  @@map("social_requests")
+}
+
+model GeneratedOutput {
+  id              String   @id @default(cuid())
+  requestId       String
+  request         SocialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  // Copy
+  headline        String   @db.VarChar(60)
+  subheadline     String   @db.VarChar(150)
+  cta             String   @db.VarChar(30)
+  copyVariations  Json     // Array of alternative copy versions
+  
+  // Design
+  visualStyle     String
+  colorPalette    Json     // Array of HEX colors
+  fontStyle       String
+  composition     String   @db.Text
+  
+  // Image Generation
+  imagePrompt     String   @db.Text
+  imageUrl        String?  // URL after image is generated
+  imageStatus     String   @default("pending") // pending, generating, completed, failed
+  
+  // Export
+  exportFormat    String
+  exportVariants  Json     // Array of format variants
+  
+  // Engagement Tracking
+  downloaded      Boolean  @default(false)
+  downloadedAt    DateTime?
+  published       Boolean  @default(false)
+  publishedAt     DateTime?
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([requestId])
+  @@index([imageStatus])
+  @@map("generated_outputs")
+}
+
+model BrandPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Saved from request for reuse
+  requestId       String   @unique
+  request         SocialRequest @relation(fields: [requestId], references: [id])
+  
+  // Brand Identity
+  brandName       String?
+  logoUrl         String?
+  
+  // Default Visual Preferences
+  defaultStyle    String?  // premium, clean, food, luxury, young
+  defaultTone     String?  // aggressive, elegant, informative, playful
+  colorPalette    Json?    // Array of brand colors
+  fontStyle       String?
+  
+  // Copy Preferences
+  voiceTone       String?  @db.Text // Description of brand voice
+  restrictions    String?  @db.Text // Common restrictions
+  
+  // Usage Stats
+  totalRequests   Int      @default(0)
+  lastUsedAt      DateTime @default(now())
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("brand_preferences")
+}
+
+// Analytics & Performance Tracking
+model SocialAnalytics {
+  id              String   @id @default(cuid())
+  outputId        String
+  
+  // Performance Metrics (if published)
+  impressions     Int?
+  reach           Int?
+  engagement      Int?
+  clicks          Int?
+  saves           Int?
+  shares          Int?
+  
+  // A/B Testing
+  variant         String?  // Which variation was used
+  
+  // Metadata
+  recordedAt      DateTime @default(now())
+  
+  @@index([outputId])
+  @@map("social_analytics")
+}
