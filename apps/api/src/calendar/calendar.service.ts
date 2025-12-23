@@ -35,19 +35,50 @@ export class CalendarService {
     return `${brandSlug.toUpperCase()}_${year}-${String(month).padStart(2, '0')}_${typeCode}_${seq}${categoryCode}_v1`;
   }
 
-  private async getActiveTemplates(brandId: string) {
-    const templates = await this.prisma.contentTemplate.findMany({
+  private async getActiveTemplates(brandId: string, userId?: string) {
+    let templates = await this.prisma.contentTemplate.findMany({
       where: { brandId, isActive: true },
       orderBy: [{ priority: 'asc' }, { dayOfWeek: 'asc' }],
     });
 
     if (templates.length === 0) {
-      throw new BadRequestException(
-        'No templates configured for this brand. Create templates first or use POST /templates/defaults',
-      );
+      await this.createDefaultTemplates(brandId, userId || 'system');
+      
+      templates = await this.prisma.contentTemplate.findMany({
+        where: { brandId, isActive: true },
+        orderBy: [{ priority: 'asc' }, { dayOfWeek: 'asc' }],
+      });
     }
 
     return templates;
+  }
+
+  private async createDefaultTemplates(brandId: string, userId: string) {
+    const DEFAULT_TEMPLATES = [
+      { name: 'Feed Produto', type: 'FEED', dayOfWeek: 1, time: '12:00', recurrence: 'WEEKLY', category: 'produto' },
+      { name: 'Feed Lifestyle', type: 'FEED', dayOfWeek: 3, time: '12:00', recurrence: 'WEEKLY', category: 'lifestyle' },
+      { name: 'Feed Promoção', type: 'FEED', dayOfWeek: 5, time: '12:00', recurrence: 'WEEKLY', category: 'promocao' },
+      { name: 'Reels Bastidores', type: 'REELS', dayOfWeek: 2, time: '18:00', recurrence: 'WEEKLY', category: 'bastidores' },
+      { name: 'Reels Tendência', type: 'REELS', dayOfWeek: 4, time: '18:00', recurrence: 'WEEKLY', category: 'tendencia' },
+      { name: 'Stories Engajamento', type: 'STORIES', dayOfWeek: 0, time: '10:00', recurrence: 'WEEKLY', category: 'engajamento' },
+      { name: 'Stories Bastidores', type: 'STORIES', dayOfWeek: 6, time: '10:00', recurrence: 'WEEKLY', category: 'bastidores' },
+    ];
+
+    await this.prisma.contentTemplate.createMany({
+      data: DEFAULT_TEMPLATES.map((t, index) => ({
+        brandId,
+        ...t,
+        priority: index,
+      })),
+    });
+
+    await this.auditService.log({
+      userId,
+      action: 'AUTO_TEMPLATES_CREATED',
+      entity: 'ContentTemplate',
+      entityId: brandId,
+      newData: { count: DEFAULT_TEMPLATES.length, trigger: 'calendar_generation' },
+    });
   }
 
   private shouldIncludeInWeek(recurrence: string, weekOfMonth: number): boolean {
@@ -159,7 +190,7 @@ export class CalendarService {
       throw new BadRequestException('Calendar month already exists. Delete or update existing plan.');
     }
 
-    const templates = await this.getActiveTemplates(data.brandId);
+    const templates = await this.getActiveTemplates(data.brandId, userId);
 
     const calendarMonth = await this.prisma.calendarMonth.create({
       data: {
