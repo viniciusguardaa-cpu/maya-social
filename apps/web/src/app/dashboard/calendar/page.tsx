@@ -141,8 +141,38 @@ export default function CalendarPage() {
                 { year, month }
             )
             await fetchCalendar()
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to generate month:", error)
+
+            if (error.response?.status === 400 && error.response?.data?.message?.includes('No templates')) {
+                const shouldCreateTemplates = window.confirm(
+                    'Nenhum template configurado!\n\n' +
+                    'Deseja criar templates padrão agora?\n\n' +
+                    'Isso vai criar 6 templates básicos (Feed, Reels, Stories) ' +
+                    'distribuídos ao longo da semana.'
+                )
+
+                if (shouldCreateTemplates) {
+                    try {
+                        await api.post(
+                            `/organizations/${currentOrg.id}/brands/${currentBrand.id}/templates/defaults`
+                        )
+
+                        await api.post(
+                            `/organizations/${currentOrg.id}/brands/${currentBrand.id}/calendar/generate`,
+                            { year, month }
+                        )
+                        await fetchCalendar()
+                    } catch (err) {
+                        console.error("Failed to create templates or generate month:", err)
+                        alert('Erro ao criar templates. Tente novamente.')
+                    }
+                } else {
+                    alert('Você precisa configurar templates antes de gerar o mês.\n\nVá em Templates → Criar Templates Padrão')
+                }
+            } else {
+                alert('Erro ao gerar mês. Verifique o console para mais detalhes.')
+            }
         } finally {
             setGenerating(false)
         }

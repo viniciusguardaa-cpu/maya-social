@@ -2,12 +2,14 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { ContentType, ContentStatus } from '@prisma/client';
+import { BatchGenerationService, BatchGenerationOptions } from './batch-generation.service';
 
 export interface GenerateMonthPlanDto {
   brandId: string;
   year: number;
   month: number;
   preview?: boolean;
+  autoGenerate?: BatchGenerationOptions;
 }
 
 export interface PlanPreviewItem {
@@ -23,6 +25,7 @@ export class CalendarService {
   constructor(
     private prisma: PrismaService,
     private auditService: AuditService,
+    private batchGenerationService: BatchGenerationService,
   ) {}
 
   generateContentCode(brandSlug: string, year: number, month: number, type: ContentType, sequence: number, category?: string): string {
@@ -187,7 +190,22 @@ export class CalendarService {
       },
     });
 
-    return this.getMonthWithItems(calendarMonth.id);
+    const result = await this.getMonthWithItems(calendarMonth.id);
+
+    if (data.autoGenerate) {
+      const batchResult = await this.batchGenerationService.generateForMonth(
+        calendarMonth.id,
+        userId,
+        data.autoGenerate,
+      );
+
+      return {
+        ...result,
+        batchGeneration: batchResult,
+      };
+    }
+
+    return result;
   }
 
   async listMonths(brandId: string) {
