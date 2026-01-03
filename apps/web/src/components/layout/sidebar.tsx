@@ -17,9 +17,11 @@ import {
     ChevronLeft,
     Clock,
     Hash,
+    ListChecks,
 } from "lucide-react"
 import { useState } from "react"
 import { BrandSwitcher } from "@/components/brand-switcher"
+import { useAuthStore } from "@/lib/store"
 
 const mainNav = [
     { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -28,6 +30,11 @@ const mainNav = [
     { title: "Assets", href: "/dashboard/assets", icon: Image },
     { title: "Publicações", href: "/dashboard/publications", icon: Send },
     { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+]
+
+const clientMainNav = [
+    { title: "Aprovações", href: "/dashboard/approvals", icon: ListChecks },
+    { title: "Calendário", href: "/dashboard/calendar", icon: Calendar },
 ]
 
 const secondaryNav = [
@@ -39,6 +46,10 @@ const secondaryNav = [
     { title: "Configurações", href: "/dashboard/settings", icon: Settings },
 ]
 
+const clientSecondaryNav = [
+    { title: "Configurações", href: "/dashboard/settings", icon: Settings },
+]
+
 interface SidebarProps {
     brandName?: string
 }
@@ -46,6 +57,11 @@ interface SidebarProps {
 export function Sidebar({ brandName = "Maya" }: SidebarProps) {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
+    const { currentOrg } = useAuthStore()
+
+    const isClient = currentOrg?.role === "SUPPORT"
+    const primaryNav = isClient ? clientMainNav : mainNav
+    const extraNav = isClient ? clientSecondaryNav : secondaryNav
 
     return (
         <aside className={cn(
@@ -72,7 +88,7 @@ export function Sidebar({ brandName = "Maya" }: SidebarProps) {
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto p-2">
                 <div className="space-y-1">
-                    {mainNav.map((item) => {
+                    {primaryNav.map((item) => {
                         const Icon = item.icon
                         const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                         return (
@@ -96,7 +112,7 @@ export function Sidebar({ brandName = "Maya" }: SidebarProps) {
                 <div className="my-4 h-px bg-border" />
 
                 <div className="space-y-1">
-                    {secondaryNav.map((item) => {
+                    {extraNav.map((item) => {
                         const Icon = item.icon
                         const isActive = pathname === item.href
                         return (

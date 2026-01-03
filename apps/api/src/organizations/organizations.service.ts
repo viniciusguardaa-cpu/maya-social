@@ -38,6 +38,23 @@ export class OrganizationsService {
     return organization;
   }
 
+  async listMembers(organizationId: string) {
+    return this.prisma.userOrganization.findMany({
+      where: { organizationId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findById(id: string) {
     const org = await this.prisma.organization.findUnique({
       where: { id },

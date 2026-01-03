@@ -70,6 +70,15 @@ export interface DashboardData {
 export const organizationsApi = {
   list: () => api.get<Organization[]>("/organizations"),
   get: (id: string) => api.get<Organization>(`/organizations/${id}`),
+  members: {
+    list: (orgId: string) => api.get(`/organizations/${orgId}/members`),
+    add: (orgId: string, data: { email: string; role: string }) =>
+      api.post(`/organizations/${orgId}/members`, data),
+    updateRole: (orgId: string, memberId: string, role: string) =>
+      api.patch(`/organizations/${orgId}/members/${memberId}`, { role }),
+    remove: (orgId: string, memberId: string) =>
+      api.delete(`/organizations/${orgId}/members/${memberId}`),
+  },
 }
 
 export const brandsApi = {
@@ -137,4 +146,26 @@ export const templatesApi = {
     api.post(`/organizations/${orgId}/brands/${brandId}/templates`, data),
   createDefaults: (orgId: string, brandId: string) =>
     api.post(`/organizations/${orgId}/brands/${brandId}/templates/defaults`),
+}
+
+export const approvalsApi = {
+  pending: (orgId: string, brandId: string) =>
+    api.get(`/organizations/${orgId}/brands/${brandId}/approvals/pending`),
+  byContent: (orgId: string, brandId: string, contentId: string) =>
+    api.get(`/organizations/${orgId}/brands/${brandId}/approvals/content/${contentId}`),
+  approve: (orgId: string, brandId: string, contentId: string, reason?: string) =>
+    api.post(`/organizations/${orgId}/brands/${brandId}/approvals/content/${contentId}/approve`, { reason }),
+  reject: (orgId: string, brandId: string, contentId: string, reason: string) =>
+    api.post(`/organizations/${orgId}/brands/${brandId}/approvals/content/${contentId}/reject`, { reason }),
+  requestRevision: (
+    orgId: string,
+    brandId: string,
+    contentId: string,
+    reason: string,
+    diff?: Record<string, any>,
+  ) =>
+    api.post(`/organizations/${orgId}/brands/${brandId}/approvals/content/${contentId}/request-revision`, {
+      reason,
+      diff,
+    }),
 }

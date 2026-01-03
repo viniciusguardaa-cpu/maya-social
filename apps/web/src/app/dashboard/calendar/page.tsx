@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { toast } from "sonner"
 
 interface ContentItem {
     id: string
@@ -56,10 +57,11 @@ const typeLabels: Record<string, string> = {
     AD: "Anúncio",
 }
 
-function CalendarDay({ date, currentMonth, contents }: {
+function CalendarDay({ date, currentMonth, contents, onContentClick }: {
     date: Date
     currentMonth: Date
     contents: ContentItem[]
+    onContentClick: (content: ContentItem) => void
 }) {
     const isCurrentMonth = isSameMonth(date, currentMonth)
     const isCurrentDay = isToday(date)
@@ -79,7 +81,9 @@ function CalendarDay({ date, currentMonth, contents }: {
                     return (
                         <div
                             key={content.id}
-                            className={`text-xs px-1.5 py-0.5 rounded truncate text-white cursor-pointer hover:opacity-80 ${typeColors[content.type] || "bg-gray-500"}`}
+                            onClick={() => onContentClick(content)}
+                            className={`text-xs px-1.5 py-0.5 rounded truncate text-white cursor-pointer hover:opacity-80 hover:scale-105 transition-all ${typeColors[content.type] || "bg-gray-500"}`}
+                            title={content.brief?.title || content.code}
                         >
                             <span className="font-medium">{time}</span> {content.brief?.title || content.type}
                         </div>
@@ -141,6 +145,7 @@ export default function CalendarPage() {
                 { year, month }
             )
             await fetchCalendar()
+            toast.success(`Plano de ${format(currentMonth, "MMMM yyyy", { locale: ptBR })} gerado com sucesso!`)
         } catch (error: any) {
             console.error("Failed to generate month:", error)
 
@@ -163,15 +168,16 @@ export default function CalendarPage() {
                             { year, month }
                         )
                         await fetchCalendar()
+                        toast.success('Templates criados e mês gerado!')
                     } catch (err) {
                         console.error("Failed to create templates or generate month:", err)
-                        alert('Erro ao criar templates. Tente novamente.')
+                        toast.error('Erro ao criar templates. Tente novamente.')
                     }
                 } else {
-                    alert('Você precisa configurar templates antes de gerar o mês.\n\nVá em Templates → Criar Templates Padrão')
+                    toast.warning('Configure os templates primeiro em Templates → Criar Templates Padrão')
                 }
             } else {
-                alert('Erro ao gerar mês. Verifique o console para mais detalhes.')
+                toast.error('Erro ao gerar mês. Verifique o console.')
             }
         } finally {
             setGenerating(false)
@@ -324,6 +330,10 @@ export default function CalendarPage() {
                                             date={day}
                                             currentMonth={currentMonth}
                                             contents={contents}
+                                            onContentClick={(item) => {
+                                                setSelectedContent(item)
+                                                setModalOpen(true)
+                                            }}
                                         />
                                     )
                                 })}

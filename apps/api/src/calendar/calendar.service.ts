@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
-import { ContentType, ContentStatus } from '@prisma/client';
+import { ContentType, ContentStatus, Recurrence } from '@prisma/client';
 import { BatchGenerationService, BatchGenerationOptions } from './batch-generation.service';
 
 export interface GenerateMonthPlanDto {
@@ -54,14 +54,40 @@ export class CalendarService {
   }
 
   private async createDefaultTemplates(brandId: string, userId: string) {
-    const DEFAULT_TEMPLATES = [
-      { name: 'Feed Produto', type: 'FEED', dayOfWeek: 1, time: '12:00', recurrence: 'WEEKLY', category: 'produto' },
-      { name: 'Feed Lifestyle', type: 'FEED', dayOfWeek: 3, time: '12:00', recurrence: 'WEEKLY', category: 'lifestyle' },
-      { name: 'Feed Promoção', type: 'FEED', dayOfWeek: 5, time: '12:00', recurrence: 'WEEKLY', category: 'promocao' },
-      { name: 'Reels Bastidores', type: 'REELS', dayOfWeek: 2, time: '18:00', recurrence: 'WEEKLY', category: 'bastidores' },
-      { name: 'Reels Tendência', type: 'REELS', dayOfWeek: 4, time: '18:00', recurrence: 'WEEKLY', category: 'tendencia' },
-      { name: 'Stories Engajamento', type: 'STORIES', dayOfWeek: 0, time: '10:00', recurrence: 'WEEKLY', category: 'engajamento' },
-      { name: 'Stories Bastidores', type: 'STORIES', dayOfWeek: 6, time: '10:00', recurrence: 'WEEKLY', category: 'bastidores' },
+    const DEFAULT_TEMPLATES: Array<{
+      name: string;
+      type: ContentType;
+      dayOfWeek: number;
+      time: string;
+      recurrence: Recurrence;
+      category: string;
+    }> = [
+      // Feed - 3x por semana (Segunda, Quarta, Sexta)
+      { name: 'Feed Produto', type: ContentType.FEED, dayOfWeek: 1, time: '12:00', recurrence: Recurrence.WEEKLY, category: 'produto' },
+      { name: 'Feed Lifestyle', type: ContentType.FEED, dayOfWeek: 3, time: '12:00', recurrence: Recurrence.WEEKLY, category: 'lifestyle' },
+      { name: 'Feed Promoção', type: ContentType.FEED, dayOfWeek: 5, time: '12:00', recurrence: Recurrence.WEEKLY, category: 'promocao' },
+      
+      // Reels - 2x por semana (Terça, Quinta)
+      { name: 'Reels Bastidores', type: ContentType.REELS, dayOfWeek: 2, time: '18:00', recurrence: Recurrence.WEEKLY, category: 'bastidores' },
+      { name: 'Reels Tendência', type: ContentType.REELS, dayOfWeek: 4, time: '18:00', recurrence: Recurrence.WEEKLY, category: 'tendencia' },
+      
+      // Stories - DIÁRIOS (manhã e tarde)
+      { name: 'Stories Bom Dia', type: ContentType.STORIES, dayOfWeek: 0, time: '09:00', recurrence: Recurrence.WEEKLY, category: 'engajamento' },
+      { name: 'Stories Bom Dia', type: ContentType.STORIES, dayOfWeek: 1, time: '09:00', recurrence: Recurrence.WEEKLY, category: 'engajamento' },
+      { name: 'Stories Bom Dia', type: ContentType.STORIES, dayOfWeek: 2, time: '09:00', recurrence: Recurrence.WEEKLY, category: 'engajamento' },
+      { name: 'Stories Bom Dia', type: ContentType.STORIES, dayOfWeek: 3, time: '09:00', recurrence: Recurrence.WEEKLY, category: 'engajamento' },
+      { name: 'Stories Bom Dia', type: ContentType.STORIES, dayOfWeek: 4, time: '09:00', recurrence: Recurrence.WEEKLY, category: 'engajamento' },
+      { name: 'Stories Bom Dia', type: ContentType.STORIES, dayOfWeek: 5, time: '09:00', recurrence: Recurrence.WEEKLY, category: 'engajamento' },
+      { name: 'Stories Bom Dia', type: ContentType.STORIES, dayOfWeek: 6, time: '09:00', recurrence: Recurrence.WEEKLY, category: 'engajamento' },
+      
+      { name: 'Stories Tarde', type: ContentType.STORIES, dayOfWeek: 1, time: '15:00', recurrence: Recurrence.WEEKLY, category: 'bastidores' },
+      { name: 'Stories Tarde', type: ContentType.STORIES, dayOfWeek: 2, time: '15:00', recurrence: Recurrence.WEEKLY, category: 'bastidores' },
+      { name: 'Stories Tarde', type: ContentType.STORIES, dayOfWeek: 3, time: '15:00', recurrence: Recurrence.WEEKLY, category: 'bastidores' },
+      { name: 'Stories Tarde', type: ContentType.STORIES, dayOfWeek: 4, time: '15:00', recurrence: Recurrence.WEEKLY, category: 'bastidores' },
+      { name: 'Stories Tarde', type: ContentType.STORIES, dayOfWeek: 5, time: '15:00', recurrence: Recurrence.WEEKLY, category: 'bastidores' },
+      
+      // Carrossel - 1x por semana (Sábado)
+      { name: 'Carrossel Educativo', type: ContentType.CAROUSEL, dayOfWeek: 6, time: '11:00', recurrence: Recurrence.WEEKLY, category: 'educativo' },
     ];
 
     await this.prisma.contentTemplate.createMany({

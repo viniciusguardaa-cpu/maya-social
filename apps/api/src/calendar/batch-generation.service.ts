@@ -194,26 +194,10 @@ export class BatchGenerationService {
     
     const aiResponse = await this.openaiService.generateCreativeContent(briefing);
 
-    const savedRequest = await this.prisma.socialRequest.create({
-      data: {
-        userId,
-        postType: this.mapContentTypeToPostType(contentItem.type),
-        objective: brief.objective || 'engagement',
-        mainIdea: brief.title,
-        briefing: briefing,
-        generatedOutput: aiResponse,
-      },
-    });
-
     await this.prisma.contentItem.update({
       where: { id: contentItem.id },
       data: { 
         status: ContentStatus.IN_PRODUCTION,
-        metadata: {
-          socialRequestId: savedRequest.id,
-          artGenerated: true,
-          imagePrompt: aiResponse.imagePrompt,
-        },
       },
     });
 
@@ -223,14 +207,13 @@ export class BatchGenerationService {
       entity: 'ContentItem',
       entityId: contentItem.id,
       newData: { 
-        socialRequestId: savedRequest.id,
         contentItemCode: contentItem.code,
       },
     });
 
     this.logger.debug(`Art generated for ${contentItem.code}`);
 
-    return savedRequest;
+    return { id: contentItem.id, aiResponse };
   }
 
   private buildBriefingFromContent(contentItem: any, brief: any, brand: any): any {
@@ -263,11 +246,12 @@ export class BatchGenerationService {
   }
 
   private mapContentTypeToPostType(contentType: ContentType): string {
-    const mapping = {
+    const mapping: Record<ContentType, string> = {
       [ContentType.FEED]: 'feed',
       [ContentType.REELS]: 'reel_cover',
       [ContentType.STORIES]: 'story',
       [ContentType.CAROUSEL]: 'carousel',
+      [ContentType.AD]: 'feed',
     };
     return mapping[contentType] || 'feed';
   }

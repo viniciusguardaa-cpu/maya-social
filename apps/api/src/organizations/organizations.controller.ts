@@ -52,6 +52,14 @@ export class OrganizationsController {
     return this.organizationsService.update(organizationId, data, user.id);
   }
 
+  @Get(':organizationId/members')
+  @UseGuards(RolesGuard)
+  @Roles(Role.OWNER, Role.ADMIN)
+  @ApiOperation({ summary: 'List organization members' })
+  async listMembers(@Param('organizationId') organizationId: string) {
+    return this.organizationsService.listMembers(organizationId);
+  }
+
   @Post(':organizationId/members')
   @UseGuards(RolesGuard)
   @Roles(Role.OWNER, Role.ADMIN)

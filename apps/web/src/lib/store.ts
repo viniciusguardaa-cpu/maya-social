@@ -81,15 +81,15 @@ export const useAuthStore = create<AuthState>()(
               avatar: undefined
             }
             const demoOrg = {
-              id: 'demo-org-1',
+              id: 'cmjt2jsa00000o2jmt8irkw7r',
               name: 'Maya Agency',
-              slug: 'maya',
+              slug: 'maya-agency',
               role: 'OWNER'
             }
             const demoBrand = {
-              id: 'demo-brand-1',
-              name: 'Maya Agency',
-              slug: 'maya'
+              id: 'cmjt2jsdq0005o2jmp4b0adu5',
+              name: 'Maya Brand',
+              slug: 'maya-brand'
             }
             
             get().setToken('demo-token')

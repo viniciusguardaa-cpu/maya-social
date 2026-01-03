@@ -118,9 +118,11 @@ export function ContentDetailModal({ content, open, onOpenChange, onUpdate }: Co
             await api.post(
                 `/organizations/${currentOrg.id}/brands/${currentBrand.id}/content/${content.id}/generate-brief`
             )
+            toast.success("Brief gerado com IA! ✨")
             onUpdate?.()
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to generate brief:", error)
+            toast.error(error.response?.data?.message || "Erro ao gerar brief")
         } finally {
             setLoading(false)
         }
@@ -134,10 +136,12 @@ export function ContentDetailModal({ content, open, onOpenChange, onUpdate }: Co
                 `/organizations/${currentOrg.id}/brands/${currentBrand.id}/content/${content.id}/move-to`,
                 { status: nextStatus }
             )
+            toast.success(`Movido para ${statusConfig[nextStatus]?.label}`)
             onUpdate?.()
             onOpenChange(false)
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to move status:", error)
+            toast.error(error.response?.data?.message || "Erro ao mover status")
         } finally {
             setLoading(false)
         }
@@ -166,10 +170,12 @@ export function ContentDetailModal({ content, open, onOpenChange, onUpdate }: Co
                     data
                 )
             }
+            toast.success("Brief salvo com sucesso!")
             setEditMode(false)
             onUpdate?.()
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to save brief:", error)
+            toast.error(error.response?.data?.message || "Erro ao salvar brief")
         } finally {
             setLoading(false)
         }

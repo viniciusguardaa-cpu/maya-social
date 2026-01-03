@@ -8,16 +8,28 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   console.log('✅ NestFactory created');
 
+  const allowedOrigins: (string | RegExp)[] = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    /^http:\/\/127\.0\.0\.1:\d+$/,
+    /^http:\/\/localhost:\d+$/,
+    'https://maya-social-web.vercel.app',
+    /\.vercel\.app$/,
+    /\.railway\.app$/,
+  ];
+  if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      /^http:\/\/127\.0\.0\.1:\d+$/,
-      /^http:\/\/localhost:\d+$/,
-      'https://maya-social-web.vercel.app',
-      /\.vercel\.app$/,
-    ],
+    origin: allowedOrigins,
     credentials: true,
+  });
+
+  // Health check endpoint
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.get('/api/health', (req: any, res: any) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
   app.useGlobalPipes(

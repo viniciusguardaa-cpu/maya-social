@@ -22,21 +22,21 @@ export class ApprovalsController {
   constructor(private approvalsService: ApprovalsService) {}
 
   @Get('pending')
-  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER)
+  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER, Role.SUPPORT)
   @ApiOperation({ summary: 'Get pending approvals' })
   async getPending(@Param('brandId') brandId: string) {
     return this.approvalsService.getPendingByBrand(brandId);
   }
 
   @Get('content/:contentId')
-  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER, Role.PRODUCER)
+  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER, Role.PRODUCER, Role.SUPPORT)
   @ApiOperation({ summary: 'Get approvals for content item' })
   async getByContentItem(@Param('contentId') contentId: string) {
     return this.approvalsService.findByContentItem(contentId);
   }
 
   @Post('content/:contentId/approve')
-  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER)
+  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER, Role.SUPPORT)
   @ApiOperation({ summary: 'Approve content item' })
   async approve(
     @Param('contentId') contentId: string,
@@ -47,7 +47,7 @@ export class ApprovalsController {
   }
 
   @Post('content/:contentId/reject')
-  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER)
+  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER, Role.SUPPORT)
   @ApiOperation({ summary: 'Reject content item' })
   async reject(
     @Param('contentId') contentId: string,
@@ -58,7 +58,7 @@ export class ApprovalsController {
   }
 
   @Post('content/:contentId/request-revision')
-  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER)
+  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER, Role.SUPPORT)
   @ApiOperation({ summary: 'Request revision for content item' })
   async requestRevision(
     @Param('contentId') contentId: string,
