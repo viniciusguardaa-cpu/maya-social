@@ -306,9 +306,15 @@ export function ContentDetailModal({ content, open, onOpenChange, onUpdate }: Co
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Brief</h3>
-                            <Button variant="outline" size="sm" onClick={startEdit}>
-                                Editar
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={handleGenerateBrief} disabled={loading}>
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                                    Gerar Brief IA
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={startEdit}>
+                                    Editar
+                                </Button>
+                            </div>
                         </div>
 
                         {content.brief.description && (
