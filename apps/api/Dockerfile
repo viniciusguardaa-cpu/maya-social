@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # Verify dist exists
-RUN ls -la dist/
+RUN ls -la dist/src/
 
 # Expose port
 EXPOSE 3001
@@ -26,4 +26,4 @@ ENV PORT=3001
 ENV NODE_ENV=production
 
 # Start the app
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/main.js"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/src/main.js"]
