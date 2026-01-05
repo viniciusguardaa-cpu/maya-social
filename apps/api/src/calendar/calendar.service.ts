@@ -311,11 +311,28 @@ export class CalendarService {
       contentItems = this.buildContentItems(brand, templates, data.year, data.month, calendarMonth.id);
     }
 
-    const itemsToCreate = contentItems.map(({ templateName, category, metadata, ...item }) => item);
+    // Create content items one by one to get IDs for briefs
+    const createdItems = [];
+    for (const item of contentItems) {
+      const { templateName, category, metadata, ...itemData } = item;
+      const created = await this.prisma.contentItem.create({
+        data: itemData,
+      });
+      createdItems.push({ ...created, templateName, category, metadata });
+    }
 
-    await this.prisma.contentItem.createMany({
-      data: itemsToCreate,
-    });
+    // Create briefs with theme names
+    for (const item of createdItems) {
+      await this.prisma.brief.create({
+        data: {
+          contentItemId: item.id,
+          title: item.templateName || item.type,
+          objective: item.category || '',
+          cta: '',
+          hashtags: [],
+        },
+      });
+    }
 
     await this.auditService.log({
       userId,
