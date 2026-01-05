@@ -18,12 +18,12 @@ COPY . .
 RUN npm run build
 
 # Verify dist exists
-RUN ls -la dist/src/
+RUN ls -la dist/
 
 # Expose port
 EXPOSE 3001
 ENV PORT=3001
 ENV NODE_ENV=production
 
-# Start the app (db is already synced from previous deploys)
-CMD ["node", "dist/src/main.js"]
+# Start the app
+CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/main.js"]
