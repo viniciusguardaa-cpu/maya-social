@@ -37,6 +37,7 @@ interface AuthState {
   setCurrentBrand: (brand: Brand | null) => void
   
   login: (email: string) => Promise<boolean>
+  register: (data: { name: string; email: string; company?: string }) => Promise<boolean>
   logout: () => void
   fetchMe: () => Promise<void>
   fetchBrands: () => Promise<Brand[]>
@@ -72,38 +73,6 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           
-          // Demo mode - bypass API
-          if (email === 'demo@maya.com') {
-            const demoUser = {
-              id: 'demo-user-1',
-              email: 'demo@maya.com',
-              name: 'Usuário Demo',
-              avatar: undefined
-            }
-            const demoOrg = {
-              id: 'cmjt2jsa00000o2jmt8irkw7r',
-              name: 'Maya Agency',
-              slug: 'maya-agency',
-              role: 'OWNER'
-            }
-            const demoBrand = {
-              id: 'cmjt2jsdq0005o2jmp4b0adu5',
-              name: 'Maya Brand',
-              slug: 'maya-brand'
-            }
-            
-            get().setToken('demo-token')
-            set({ 
-              user: demoUser, 
-              organizations: [demoOrg],
-              currentOrg: demoOrg,
-              currentBrand: demoBrand,
-              isLoading: false 
-            })
-            return true
-          }
-          
-          // Real API login
           const response = await api.post('/auth/login', { email })
           const { access_token, user } = response.data
           
@@ -114,6 +83,25 @@ export const useAuthStore = create<AuthState>()(
           return true
         } catch (error) {
           console.error('Login failed:', error)
+          set({ isLoading: false })
+          return false
+        }
+      },
+
+      register: async (data: { name: string; email: string; company?: string }) => {
+        try {
+          set({ isLoading: true })
+          
+          const response = await api.post('/auth/register', data)
+          const { access_token, user } = response.data
+          
+          get().setToken(access_token)
+          set({ user, isLoading: false })
+          
+          await get().fetchMe()
+          return true
+        } catch (error) {
+          console.error('Registration failed:', error)
           set({ isLoading: false })
           return false
         }

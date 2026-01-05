@@ -162,4 +162,57 @@ export class AuthService {
 
     return this.login(user);
   }
+
+  async register(data: { name: string; email: string; company?: string }) {
+    // Check if user already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingUser) {
+      throw new UnauthorizedException('Email already registered');
+    }
+
+    // Create organization from company name or user name
+    const orgName = data.company || `${data.name}'s Workspace`;
+    const orgSlug = orgName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .substring(0, 50) + '-' + Date.now().toString(36);
+
+    // Create user with organization
+    const user = await this.prisma.user.create({
+      data: {
+        email: data.email,
+        name: data.name,
+        organizations: {
+          create: {
+            role: 'OWNER',
+            organization: {
+              create: {
+                name: orgName,
+                slug: orgSlug,
+              },
+            },
+          },
+        },
+      },
+      include: {
+        organizations: {
+          include: { organization: true },
+        },
+      },
+    });
+
+    await this.auditService.log({
+      userId: user.id,
+      action: 'USER_REGISTERED',
+      entity: 'User',
+      entityId: user.id,
+      newData: { email: user.email, name: user.name },
+    });
+
+    return this.login(user);
+  }
 }

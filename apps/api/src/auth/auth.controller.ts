@@ -67,8 +67,14 @@ export class AuthController {
   }
 
   @Post('login')
-  @ApiOperation({ summary: 'Login com email (dev)' })
+  @ApiOperation({ summary: 'Login com email' })
   async loginWithEmail(@Body() body: { email: string }) {
     return this.authService.loginWithEmail(body.email);
+  }
+
+  @Post('register')
+  @ApiOperation({ summary: 'Registrar novo usuário' })
+  async register(@Body() body: { name: string; email: string; company?: string }) {
+    return this.authService.register(body);
   }
 }

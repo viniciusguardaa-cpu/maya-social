@@ -225,41 +225,6 @@ export default function ContentPage() {
     const fetchKanban = async () => {
         if (!currentOrg || !currentBrand) return
 
-        // Demo mode - use mock data
-        if (currentOrg.id === 'demo-org-1') {
-            const mockData: KanbanData = {
-                columns: {
-                    PLANNED: [
-                        { id: "1", code: "MAYA_RL_01", type: "REELS", status: "PLANNED", brief: { title: "Reels: Dicas de Marketing" } },
-                        { id: "2", code: "MAYA_FD_02", type: "FEED", status: "PLANNED" },
-                    ],
-                    BRIEFED: [
-                        { id: "3", code: "MAYA_CA_03", type: "CAROUSEL", status: "BRIEFED", brief: { title: "Carrossel: Tendências 2025", description: "5 tendências para ficar de olho" } },
-                    ],
-                    IN_PRODUCTION: [
-                        { id: "4", code: "MAYA_RL_04", type: "REELS", status: "IN_PRODUCTION", brief: { title: "Reels: Tutorial Rápido" } },
-                        { id: "5", code: "MAYA_ST_05", type: "STORIES", status: "IN_PRODUCTION", brief: { title: "Stories: Bastidores" } },
-                    ],
-                    READY: [
-                        { id: "6", code: "MAYA_FD_06", type: "FEED", status: "READY", brief: { title: "Post: Novidades do Mês" }, scheduledAt: "2025-01-20T10:00:00" },
-                    ],
-                    AWAITING_APPROVAL: [
-                        { id: "7", code: "MAYA_RL_07", type: "REELS", status: "AWAITING_APPROVAL", brief: { title: "Reels: Case de Sucesso" } },
-                    ],
-                    APPROVED: [
-                        { id: "8", code: "MAYA_CA_08", type: "CAROUSEL", status: "APPROVED", brief: { title: "Carrossel: Guia Completo" }, scheduledAt: "2025-01-22T18:00:00" },
-                    ],
-                    SCHEDULED: [
-                        { id: "9", code: "MAYA_FD_09", type: "FEED", status: "SCHEDULED", brief: { title: "Post: Lançamento" }, scheduledAt: "2025-01-25T12:00:00" },
-                    ],
-                },
-                counts: { PLANNED: 2, BRIEFED: 1, IN_PRODUCTION: 2, READY: 1, AWAITING_APPROVAL: 1, APPROVED: 1, SCHEDULED: 1 },
-                total: 9
-            }
-            setKanban(mockData)
-            setLoading(false)
-            return
-        }
 
         try {
             const response = await api.get(
@@ -282,35 +247,6 @@ export default function ContentPage() {
 
         setMovingId(contentId)
 
-        // Demo mode - update local state
-        if (currentOrg.id === 'demo-org-1') {
-            setKanban(prev => {
-                if (!prev) return prev
-                const newColumns = { ...prev.columns }
-                let movedItem: ContentItem | undefined
-
-                // Find and remove item from current column
-                for (const [status, items] of Object.entries(newColumns)) {
-                    const idx = items.findIndex(i => i.id === contentId)
-                    if (idx !== -1) {
-                        movedItem = { ...items[idx], status: newStatus }
-                        newColumns[status] = items.filter(i => i.id !== contentId)
-                        break
-                    }
-                }
-
-                // Add to new column
-                if (movedItem) {
-                    newColumns[newStatus] = [...(newColumns[newStatus] || []), movedItem]
-                }
-
-                return { ...prev, columns: newColumns }
-            })
-            toast.success(`Movido para ${statusConfig[newStatus]?.label || newStatus}`)
-            setMovingId(null)
-            return
-        }
-
         try {
             await api.post(
                 `/organizations/${currentOrg.id}/brands/${currentBrand.id}/content/${contentId}/move-to`,
@@ -331,33 +267,6 @@ export default function ContentPage() {
 
         setMovingId(contentId)
         toast.loading("Gerando brief com IA...")
-
-        // Demo mode
-        if (currentOrg.id === 'demo-org-1') {
-            await new Promise(r => setTimeout(r, 1500))
-            setKanban(prev => {
-                if (!prev) return prev
-                const newColumns = { ...prev.columns }
-
-                for (const [status, items] of Object.entries(newColumns)) {
-                    const idx = items.findIndex(i => i.id === contentId)
-                    if (idx !== -1) {
-                        newColumns[status] = items.map(i =>
-                            i.id === contentId
-                                ? { ...i, brief: { title: `Brief gerado para ${i.code}`, description: "Conteúdo gerado automaticamente com IA. Edite conforme necessário.", objective: "Engajar audiência", cta: "Curta e compartilhe!" } }
-                                : i
-                        )
-                        break
-                    }
-                }
-
-                return { ...prev, columns: newColumns }
-            })
-            toast.dismiss()
-            toast.success("Brief gerado com sucesso!")
-            setMovingId(null)
-            return
-        }
 
         try {
             await api.post(

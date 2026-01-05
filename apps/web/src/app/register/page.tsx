@@ -11,56 +11,33 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator"
 import { Sparkles, Loader2, Mail, User, Building } from "lucide-react"
 import { useAuthStore } from "@/lib/store"
-import { saveRegisteredUser } from "@/lib/admin-utils"
 
 export default function RegisterPage() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const plan = searchParams.get("plan") || "starter"
-    const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         company: "",
     })
-    const { setUser, setToken } = useAuthStore()
+    const { register, isLoading } = useAuthStore()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsLoading(true)
         setError("")
 
-        try {
-            // Simulated registration - in production, this would call your API
-            await new Promise(resolve => setTimeout(resolve, 1000))
+        const success = await register({
+            name: formData.name,
+            email: formData.email,
+            company: formData.company || undefined,
+        })
 
-            // Create user session locally
-            const newUser = {
-                id: `user-${Date.now()}`,
-                email: formData.email,
-                name: formData.name,
-                avatar: undefined,
-            }
-
-            setToken(`token-${Date.now()}`)
-            setUser(newUser)
-
-            // Save to registered users for admin panel
-            saveRegisteredUser({
-                id: newUser.id,
-                name: newUser.name,
-                email: newUser.email,
-                company: formData.company,
-                plan: plan,
-            })
-
-            // Redirect to onboarding with plan
+        if (success) {
             router.push(`/onboarding?plan=${plan}`)
-        } catch (err) {
-            setError("Erro ao criar conta. Tente novamente.")
-        } finally {
-            setIsLoading(false)
+        } else {
+            setError("Erro ao criar conta. Email já pode estar em uso.")
         }
     }
 

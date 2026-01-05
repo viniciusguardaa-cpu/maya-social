@@ -15,7 +15,7 @@ import { useAuthStore } from "@/lib/store"
 export default function LoginPage() {
     const router = useRouter()
     const { login, isLoading } = useAuthStore()
-    const [email, setEmail] = useState("demo@maya.com")
+    const [email, setEmail] = useState("")
     const [error, setError] = useState("")
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -26,7 +26,7 @@ export default function LoginPage() {
         if (success) {
             router.push("/dashboard")
         } else {
-            setError("Email não encontrado. Use demo@maya.com")
+            setError("Email não encontrado. Crie uma conta primeiro.")
         }
     }
 
@@ -89,7 +89,7 @@ export default function LoginPage() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="demo@maya.com"
+                                    placeholder="seu@email.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     disabled={isLoading}
@@ -112,9 +112,6 @@ export default function LoginPage() {
                             <Link href="/register" className="text-primary font-medium hover:underline">
                                 Criar conta grátis
                             </Link>
-                        </p>
-                        <p className="text-xs text-center text-muted-foreground w-full">
-                            Demo: use <strong>demo@maya.com</strong> para acessar
                         </p>
                     </CardFooter>
                 </Card>

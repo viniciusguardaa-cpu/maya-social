@@ -51,20 +51,7 @@ interface Asset {
     tags: string[]
 }
 
-const mockAssets: Asset[] = [
-    { id: "1", name: "produto-destaque.jpg", type: "image", url: "https://picsum.photos/seed/1/800/800", size: "2.4 MB", dimensions: "1080x1080", createdAt: "2025-01-15", tags: ["produto", "feed"] },
-    { id: "2", name: "reels-trend.mp4", type: "video", url: "https://picsum.photos/seed/2/800/1400", thumbnail: "https://picsum.photos/seed/2/400/700", size: "15.8 MB", dimensions: "1080x1920", createdAt: "2025-01-14", tags: ["reels", "trend"] },
-    { id: "3", name: "carousel-01.jpg", type: "image", url: "https://picsum.photos/seed/3/800/800", size: "1.8 MB", dimensions: "1080x1080", createdAt: "2025-01-13", tags: ["carousel", "educativo"] },
-    { id: "4", name: "carousel-02.jpg", type: "image", url: "https://picsum.photos/seed/4/800/800", size: "2.1 MB", dimensions: "1080x1080", createdAt: "2025-01-13", tags: ["carousel", "educativo"] },
-    { id: "5", name: "stories-promo.jpg", type: "image", url: "https://picsum.photos/seed/5/800/1400", size: "1.2 MB", dimensions: "1080x1920", createdAt: "2025-01-12", tags: ["stories", "promo"] },
-    { id: "6", name: "lifestyle-photo.jpg", type: "image", url: "https://picsum.photos/seed/6/800/800", size: "3.2 MB", dimensions: "1080x1080", createdAt: "2025-01-11", tags: ["lifestyle", "feed"] },
-    { id: "7", name: "bastidores.mp4", type: "video", url: "https://picsum.photos/seed/7/800/1400", thumbnail: "https://picsum.photos/seed/7/400/700", size: "22.4 MB", dimensions: "1080x1920", createdAt: "2025-01-10", tags: ["reels", "bastidores"] },
-    { id: "8", name: "produto-novo.jpg", type: "image", url: "https://picsum.photos/seed/8/800/800", size: "2.8 MB", dimensions: "1080x1080", createdAt: "2025-01-09", tags: ["produto", "feed"] },
-    { id: "9", name: "tutorial-thumb.jpg", type: "image", url: "https://picsum.photos/seed/9/800/800", size: "1.5 MB", dimensions: "1080x1080", createdAt: "2025-01-08", tags: ["carousel", "tutorial"] },
-    { id: "10", name: "stories-enquete.jpg", type: "image", url: "https://picsum.photos/seed/10/800/1400", size: "0.9 MB", dimensions: "1080x1920", createdAt: "2025-01-07", tags: ["stories", "engajamento"] },
-    { id: "11", name: "feed-promocao.jpg", type: "image", url: "https://picsum.photos/seed/11/800/800", size: "2.2 MB", dimensions: "1080x1080", createdAt: "2025-01-06", tags: ["feed", "promo"] },
-    { id: "12", name: "reels-viral.mp4", type: "video", url: "https://picsum.photos/seed/12/800/1400", thumbnail: "https://picsum.photos/seed/12/400/700", size: "18.6 MB", dimensions: "1080x1920", createdAt: "2025-01-05", tags: ["reels", "trend"] },
-]
+const mockAssets: Asset[] = []
 
 type ViewMode = "grid" | "list"
 type FilterType = "all" | "image" | "video"

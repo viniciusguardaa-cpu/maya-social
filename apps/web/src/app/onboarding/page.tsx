@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sparkles, Building, Globe, Instagram, Loader2, Check, ArrowRight } from "lucide-react"
 import { useAuthStore } from "@/lib/store"
-import { saveRegisteredUser } from "@/lib/admin-utils"
+import { api } from "@/lib/api"
 
 const steps = [
     { id: 1, title: "Sua Empresa", description: "Informações básicas" },
@@ -23,7 +23,7 @@ export default function OnboardingPage() {
 
     const [currentStep, setCurrentStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
-    const { user, setCurrentOrg, setCurrentBrand } = useAuthStore()
+    const { user, currentOrg, setCurrentOrg, setCurrentBrand, fetchMe } = useAuthStore()
 
     const [formData, setFormData] = useState({
         companyName: "",
@@ -39,38 +39,32 @@ export default function OnboardingPage() {
         } else {
             setIsLoading(true)
 
-            // Save organization and brand
-            const newOrg = {
-                id: `org-${Date.now()}`,
-                name: formData.companyName || "Minha Empresa",
-                slug: formData.companyName?.toLowerCase().replace(/\s+/g, '-') || 'minha-empresa',
-                role: 'OWNER',
+            try {
+                // User already has an organization from registration
+                // Just need to create the brand
+                if (currentOrg) {
+                    const brandName = formData.brandName || formData.companyName || "Minha Marca"
+                    const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+                    const brandResponse = await api.post(`/organizations/${currentOrg.id}/brands`, {
+                        name: brandName,
+                        slug: brandSlug + '-' + Date.now().toString(36),
+                    })
+
+                    setCurrentBrand(brandResponse.data)
+                }
+
+                // Refresh user data
+                await fetchMe()
+
+                router.push("/dashboard?welcome=true")
+            } catch (error) {
+                console.error("Onboarding error:", error)
+                // Still redirect to dashboard
+                router.push("/dashboard")
+            } finally {
+                setIsLoading(false)
             }
-
-            const newBrand = {
-                id: `brand-${Date.now()}`,
-                name: formData.brandName || formData.companyName || "Minha Marca",
-                slug: formData.brandName?.toLowerCase().replace(/\s+/g, '-') || 'minha-marca',
-            }
-
-            setCurrentOrg(newOrg)
-            setCurrentBrand(newBrand)
-
-            // Save/update user in admin panel
-            if (user) {
-                saveRegisteredUser({
-                    id: user.id,
-                    name: user.name || formData.companyName,
-                    email: user.email,
-                    company: formData.companyName,
-                    plan: plan,
-                })
-            }
-
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            router.push("/dashboard?welcome=true")
         }
     }
 

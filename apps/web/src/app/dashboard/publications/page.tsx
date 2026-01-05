@@ -49,14 +49,7 @@ interface Publication {
     }
 }
 
-const mockPublications: Publication[] = [
-    { id: "1", contentCode: "MAYA_RL_12", title: "Trend Viral", caption: "🔥 Novidade chegando! O que vocês acham?\n\n#maya #trend #viral", type: "REELS", status: "published", publishedAt: "2025-01-15T10:00:00", thumbnail: "https://picsum.photos/seed/p1/400/700", metrics: { likes: 2847, comments: 342, reach: 18420 } },
-    { id: "2", contentCode: "MAYA_FD_08", title: "Produto Destaque", caption: "✨ Chegou o que você esperava!\n\nVem conferir 👆\n\n#lancamento #produto", type: "FEED", status: "published", publishedAt: "2025-01-14T12:00:00", thumbnail: "https://picsum.photos/seed/p2/400/400", metrics: { likes: 1654, comments: 198, reach: 9870 } },
-    { id: "3", contentCode: "MAYA_CA_05", title: "Tutorial Completo", caption: "📚 5 dicas que você PRECISA saber!\n\nSalva pra não esquecer 💾\n\n#dicas #tutorial", type: "CAROUSEL", status: "scheduled", scheduledAt: "2025-01-17T10:00:00", thumbnail: "https://picsum.photos/seed/p3/400/400" },
-    { id: "4", contentCode: "MAYA_ST_03", title: "Enquete do Dia", caption: "Qual vocês preferem? 🤔", type: "STORIES", status: "scheduled", scheduledAt: "2025-01-17T18:00:00", thumbnail: "https://picsum.photos/seed/p4/400/700" },
-    { id: "5", contentCode: "MAYA_RL_13", title: "Bastidores", caption: "Um dia na @mayaagencia 🎬\n\n#bastidores #rotina #agencia", type: "REELS", status: "scheduled", scheduledAt: "2025-01-18T12:00:00", thumbnail: "https://picsum.photos/seed/p5/400/700" },
-    { id: "6", contentCode: "MAYA_FD_09", title: "Promo Especial", caption: "🎉 PROMOÇÃO RELÂMPAGO!\n\nSó até amanhã ⚡\n\n#promo #oferta", type: "FEED", status: "failed", scheduledAt: "2025-01-13T10:00:00", thumbnail: "https://picsum.photos/seed/p6/400/400" },
-]
+const mockPublications: Publication[] = []
 
 const statusConfig = {
     scheduled: { label: "Agendado", color: "bg-blue-500", icon: Clock },
