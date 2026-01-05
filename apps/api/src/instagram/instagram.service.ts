@@ -36,12 +36,10 @@ export class InstagramService {
   // Generate OAuth URL for user to authorize
   getAuthorizationUrl(brandId: string): string {
     const scope = [
-      'instagram_basic',
-      'instagram_content_publish',
-      'instagram_manage_comments',
-      'instagram_manage_insights',
+      'public_profile',
       'pages_show_list',
       'pages_read_engagement',
+      'business_management',
     ].join(',');
 
     const state = Buffer.from(JSON.stringify({ brandId })).toString('base64');
