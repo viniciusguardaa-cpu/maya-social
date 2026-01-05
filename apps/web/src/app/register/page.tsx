@@ -28,16 +28,16 @@ export default function RegisterPage() {
         e.preventDefault()
         setError("")
 
-        const success = await register({
+        const result = await register({
             name: formData.name,
             email: formData.email,
             company: formData.company || undefined,
         })
 
-        if (success) {
+        if (result.success) {
             router.push(`/onboarding?plan=${plan}`)
         } else {
-            setError("Erro ao criar conta. Email já pode estar em uso.")
+            setError(result.error || "Erro ao criar conta.")
         }
     }
 

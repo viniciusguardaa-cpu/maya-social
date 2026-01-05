@@ -37,7 +37,7 @@ interface AuthState {
   setCurrentBrand: (brand: Brand | null) => void
   
   login: (email: string) => Promise<boolean>
-  register: (data: { name: string; email: string; company?: string }) => Promise<boolean>
+  register: (data: { name: string; email: string; company?: string }) => Promise<{ success: boolean; error: string | null }>
   logout: () => void
   fetchMe: () => Promise<void>
   fetchBrands: () => Promise<Brand[]>
@@ -99,11 +99,12 @@ export const useAuthStore = create<AuthState>()(
           set({ user, isLoading: false })
           
           await get().fetchMe()
-          return true
-        } catch (error) {
+          return { success: true, error: null }
+        } catch (error: any) {
           console.error('Registration failed:', error)
           set({ isLoading: false })
-          return false
+          const message = error.response?.data?.message || error.message || 'Erro ao criar conta'
+          return { success: false, error: message }
         }
       },
 
