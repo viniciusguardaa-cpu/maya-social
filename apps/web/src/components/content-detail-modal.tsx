@@ -100,10 +100,7 @@ export function ContentDetailModal({ content, open, onOpenChange, onUpdate }: Co
         hashtags: ""
     })
     const [newComment, setNewComment] = useState("")
-    const [comments, setComments] = useState<Comment[]>([
-        { id: "1", text: "Ficou ótimo! Só ajustar a legenda final.", author: "Ana Silva", createdAt: "Há 2h" },
-        { id: "2", text: "Aprovado! Pode agendar.", author: "Carlos Santos", createdAt: "Há 1h" },
-    ])
+    const [comments, setComments] = useState<Comment[]>([])
 
     if (!content) return null
 
