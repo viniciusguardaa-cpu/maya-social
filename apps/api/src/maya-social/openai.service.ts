@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class OpenAIService {
   private readonly apiKey: string;
-  private readonly model = 'gpt-4o';
+  private readonly model = 'gpt-4-turbo';
 
   constructor(private config: ConfigService) {
     this.apiKey = this.config.get<string>('OPENAI_API_KEY') || '';
