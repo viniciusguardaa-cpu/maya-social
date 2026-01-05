@@ -19,7 +19,8 @@ import {
     RefreshCw,
     AlertCircle,
     LayoutGrid,
-    GanttChartSquare
+    GanttChartSquare,
+    Trash2
 } from "lucide-react"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -157,6 +158,28 @@ export default function CalendarPage() {
         }
     }
 
+    const deleteMonth = async () => {
+        if (!currentOrg || !currentBrand || !calendarData) return
+
+        if (!confirm(`Tem certeza que deseja deletar o planejamento de ${format(currentMonth, "MMMM yyyy", { locale: ptBR })}? Isso vai remover todos os ${calendarData.contentItems?.length || 0} conteúdos.`)) {
+            return
+        }
+
+        setLoading(true)
+        try {
+            await api.delete(
+                `/organizations/${currentOrg.id}/brands/${currentBrand.id}/calendar/${calendarData.id}`
+            )
+            setCalendarData(null)
+            toast.success('Mês deletado! Agora você pode gerar novamente.')
+        } catch (error: any) {
+            console.error("Failed to delete month:", error)
+            toast.error('Erro ao deletar mês.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         fetchCalendar()
     }, [currentOrg, currentBrand, year, month])
@@ -221,6 +244,12 @@ export default function CalendarPage() {
                         <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                         Atualizar
                     </Button>
+                    {calendarData && !loading && (
+                        <Button variant="outline" size="sm" onClick={deleteMonth} className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Resetar Mês
+                        </Button>
+                    )}
                     {!calendarData && !loading && (
                         <Button size="sm" onClick={() => setConfigModalOpen(true)} disabled={generating}>
                             {generating ? (
