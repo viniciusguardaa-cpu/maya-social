@@ -4,42 +4,52 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class OpenAIService {
   private readonly apiKey: string;
-  private readonly model = 'gpt-4-turbo-preview';
+  private readonly model = 'gpt-4o';
 
   constructor(private config: ConfigService) {
     this.apiKey = this.config.get<string>('OPENAI_API_KEY') || '';
   }
 
   async generateCreativeContent(briefing: any) {
+    if (!this.apiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
+    }
+
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildUserPrompt(briefing);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: this.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.8,
-        max_tokens: 2000,
-        response_format: { type: 'json_object' },
-      }),
-    });
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.8,
+          max_tokens: 2000,
+          response_format: { type: 'json_object' },
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      const content = JSON.parse(data.choices[0].message.content);
+
+      return this.validateAndFormatOutput(content);
+    } catch (error: any) {
+      console.error('OpenAI error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content);
-
-    return this.validateAndFormatOutput(content);
   }
 
   private buildSystemPrompt(): string {
