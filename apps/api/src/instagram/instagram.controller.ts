@@ -74,8 +74,23 @@ export class InstagramController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get Instagram connection status' })
   async getStatus(@Param('brandId') brandId: string) {
-    const connection = await this.instagramService.getConnection(brandId);
-    return connection || { connected: false };
+    try {
+      if (!brandId) {
+        return { connected: false };
+      }
+      const connection = await this.instagramService.getConnection(brandId);
+      if (!connection) {
+        return { connected: false };
+      }
+      return {
+        connected: true,
+        username: connection.username,
+        connectedAt: connection.connectedAt,
+      };
+    } catch (error) {
+      console.error('Error fetching Instagram status:', error);
+      return { connected: false };
+    }
   }
 
   @Delete('organizations/:orgId/brands/:brandId/instagram/disconnect')
