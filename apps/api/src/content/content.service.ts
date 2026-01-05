@@ -516,41 +516,19 @@ export class ContentService {
       postType: this.mapContentTypeToPostType(item.type),
       objective: item.brief.objective || 'engagement',
       mainIdea: item.brief.title,
+      brandName: item.brand.name,
       copy: {
         headline: item.brief.title,
-        headlineAuto: false,
         subheadline: item.brief.promise || item.brief.caption?.substring(0, 150) || item.brief.title,
         cta: item.brief.cta || null,
-        link: null,
-        whatsapp: null,
       },
       visual: {
-        style: 'auto',
-        tone: 'auto',
         colors: item.brand.primaryColor ? [item.brand.primaryColor] : null,
-        fontStyle: 'auto',
       },
-      assets: {
-        hasLogo: !!item.brand.logoUrl,
-        logoName: item.brand.logoUrl ? 'brand-logo' : null,
-        imagesCount: 0,
-        imageNames: [],
-      },
-      restrictions: null,
     };
 
-    // Generate creative content with OpenAI
-    const aiResponse = await this.openaiService.generateCreativeContent(briefing);
-
-    // Update brief with AI generated content
-    const updatedBrief = await this.prisma.brief.update({
-      where: { id: item.brief.id },
-      data: {
-        caption: aiResponse.copy?.headline 
-          ? `${aiResponse.copy.headline}\n\n${aiResponse.copy.subheadline || ''}\n\n${aiResponse.copy.cta || ''}`
-          : item.brief.caption,
-      },
-    });
+    // Generate image with DALL-E (GPT-5.1 generates prompt, DALL-E generates image)
+    const imageResult = await this.openaiService.generateImageWithDALLE(briefing);
 
     // Update content status
     await this.prisma.contentItem.update({
@@ -564,15 +542,17 @@ export class ContentService {
       entity: 'ContentItem',
       entityId: contentItemId,
       newData: { 
-        imagePrompt: aiResponse.imagePrompt,
-        design: aiResponse.design,
+        imageUrl: imageResult.imageUrl,
+        imagePrompt: imageResult.prompt,
       },
     });
 
     return {
+      success: true,
+      imageUrl: imageResult.imageUrl,
+      prompt: imageResult.prompt,
       contentItem: item,
-      aiResponse,
-      brief: updatedBrief,
+      brief: item.brief,
     };
   }
 

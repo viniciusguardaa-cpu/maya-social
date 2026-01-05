@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class OpenAIService {
   private readonly apiKey: string;
-  private readonly model = 'gpt-4-turbo-2024-04-09';
+  private readonly gptModel = 'gpt-5.1';
 
   constructor(private config: ConfigService) {
     this.apiKey = this.config.get<string>('OPENAI_API_KEY') || '';
@@ -26,7 +26,7 @@ export class OpenAIService {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: this.model,
+          model: this.gptModel,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
@@ -48,6 +48,78 @@ export class OpenAIService {
       return this.validateAndFormatOutput(content);
     } catch (error: any) {
       console.error('OpenAI error:', error);
+      throw error;
+    }
+  }
+
+  async generateImageWithDALLE(briefing: any): Promise<{ imageUrl: string; prompt: string }> {
+    if (!this.apiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
+    }
+
+    try {
+      // Step 1: Generate image prompt using GPT-5.1
+      const promptGenerationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.gptModel,
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert prompt engineer for DALL-E 3. Generate a detailed, vivid image prompt based on the briefing provided. The prompt should be specific, visually descriptive, and optimized for high-quality image generation. Return ONLY the prompt text, nothing else.`,
+            },
+            {
+              role: 'user',
+              content: `Create an image prompt for: ${JSON.stringify(briefing)}`,
+            },
+          ],
+          temperature: 0.8,
+          max_tokens: 500,
+        }),
+      });
+
+      if (!promptGenerationResponse.ok) {
+        const errorData = await promptGenerationResponse.json();
+        throw new Error(`Failed to generate image prompt: ${errorData.error?.message}`);
+      }
+
+      const promptData = await promptGenerationResponse.json();
+      const imagePrompt = promptData.choices[0].message.content.trim();
+
+      // Step 2: Generate image using DALL-E 3
+      const dalleResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: imagePrompt,
+          n: 1,
+          size: '1024x1024',
+          quality: 'hd',
+        }),
+      });
+
+      if (!dalleResponse.ok) {
+        const errorData = await dalleResponse.json();
+        throw new Error(`DALL-E API error: ${errorData.error?.message}`);
+      }
+
+      const dalleData = await dalleResponse.json();
+      const imageUrl = dalleData.data[0].url;
+
+      return {
+        imageUrl,
+        prompt: imagePrompt,
+      };
+    } catch (error: any) {
+      console.error('Image generation error:', error);
       throw error;
     }
   }
