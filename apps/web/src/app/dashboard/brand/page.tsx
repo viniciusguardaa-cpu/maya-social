@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useAuthStore } from "@/lib/store"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,8 +22,11 @@ import {
     FileText,
     Target,
     Users,
-    Sparkles
+    Sparkles,
+    Upload,
+    Image as ImageIcon
 } from "lucide-react"
+import { toast } from "sonner"
 
 interface BrandSettings {
     name: string
@@ -37,6 +40,7 @@ interface BrandSettings {
     targetAudience: string
     hashtags: string
     bio: string
+    logoUrl: string
 }
 
 export default function BrandPage() {
@@ -62,10 +66,98 @@ export default function BrandPage() {
             targetAudience: "",
             hashtags: "",
             bio: "",
+            logoUrl: "",
         }
     }
 
     const [settings, setSettings] = useState<BrandSettings>(getSavedSettings)
+    const [extractingColors, setExtractingColors] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Extract dominant colors from image using canvas
+    const extractColorsFromImage = (imageUrl: string): Promise<string[]> => {
+        return new Promise((resolve) => {
+            const img = new Image()
+            img.crossOrigin = "anonymous"
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+                if (!ctx) {
+                    resolve(['#8B5CF6', '#EC4899'])
+                    return
+                }
+
+                // Scale down for performance
+                const scale = Math.min(100 / img.width, 100 / img.height)
+                canvas.width = img.width * scale
+                canvas.height = img.height * scale
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+                const pixels = imageData.data
+
+                // Group colors and find dominants
+                const colorCounts: Record<string, number> = {}
+                for (let i = 0; i < pixels.length; i += 4) {
+                    const r = Math.round(pixels[i] / 32) * 32
+                    const g = Math.round(pixels[i + 1] / 32) * 32
+                    const b = Math.round(pixels[i + 2] / 32) * 32
+                    const a = pixels[i + 3]
+
+                    if (a < 128) continue // Skip transparent
+                    if (r > 240 && g > 240 && b > 240) continue // Skip white
+                    if (r < 15 && g < 15 && b < 15) continue // Skip black
+
+                    const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+                    colorCounts[hex] = (colorCounts[hex] || 0) + 1
+                }
+
+                const sortedColors = Object.entries(colorCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([color]) => color)
+
+                resolve(sortedColors.length >= 2 ? sortedColors : ['#8B5CF6', '#EC4899'])
+            }
+            img.onerror = () => resolve(['#8B5CF6', '#EC4899'])
+            img.src = imageUrl
+        })
+    }
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Por favor, selecione uma imagem')
+            return
+        }
+
+        setExtractingColors(true)
+
+        try {
+            // Create local URL for preview
+            const localUrl = URL.createObjectURL(file)
+
+            // Extract colors
+            const colors = await extractColorsFromImage(localUrl)
+
+            // Update settings
+            setSettings(prev => ({
+                ...prev,
+                logoUrl: localUrl,
+                primaryColor: colors[0] || prev.primaryColor,
+                secondaryColor: colors[1] || prev.secondaryColor,
+            }))
+
+            toast.success(`Cores extraídas da logo! ${colors[0]} e ${colors[1]}`)
+        } catch (error) {
+            console.error('Error extracting colors:', error)
+            toast.error('Erro ao extrair cores da imagem')
+        } finally {
+            setExtractingColors(false)
+        }
+    }
 
     const handleSave = async () => {
         setSaving(true)
@@ -196,9 +288,56 @@ export default function BrandPage() {
                         <Palette className="h-5 w-5" />
                         Identidade Visual
                     </CardTitle>
-                    <CardDescription>Cores da marca para uso nos conteúdos</CardDescription>
+                    <CardDescription>Suba sua logo para extrair as cores automaticamente</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
+                    {/* Logo Upload */}
+                    <div className="space-y-3">
+                        <Label>Logo da Marca</Label>
+                        <div className="flex items-center gap-4">
+                            {settings.logoUrl ? (
+                                <div className="w-20 h-20 rounded-lg border overflow-hidden bg-muted flex items-center justify-center">
+                                    <img
+                                        src={settings.logoUrl}
+                                        alt="Logo"
+                                        className="max-w-full max-h-full object-contain"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-20 h-20 rounded-lg border border-dashed flex items-center justify-center bg-muted/50">
+                                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                            )}
+                            <div className="flex-1">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleLogoUpload}
+                                    className="hidden"
+                                />
+                                <Button
+                                    variant="outline"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={extractingColors}
+                                >
+                                    {extractingColors ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Upload className="h-4 w-4 mr-2" />
+                                    )}
+                                    {extractingColors ? "Extraindo cores..." : "Enviar Logo"}
+                                </Button>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    As cores serão extraídas automaticamente da imagem
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Colors */}
                     <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Cor Primária</Label>
