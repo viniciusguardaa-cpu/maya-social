@@ -88,14 +88,23 @@ export default function SettingsPage() {
     }, [currentOrg, currentBrand])
 
     const handleConnectInstagram = async () => {
-        if (!currentOrg || !currentBrand) return
+        if (!currentOrg || !currentBrand) {
+            toast.error('Selecione uma marca primeiro')
+            return
+        }
         setConnectingInstagram(true)
         try {
             const response = await api.get(
                 `/organizations/${currentOrg.id}/brands/${currentBrand.id}/instagram/auth-url`
             )
-            window.location.href = response.data.url
+            if (response.data?.url) {
+                window.location.href = response.data.url
+            } else {
+                toast.error('URL de autenticação não recebida')
+                setConnectingInstagram(false)
+            }
         } catch (error: any) {
+            console.error('Instagram connection error:', error)
             toast.error(error.response?.data?.message || 'Erro ao iniciar conexão')
             setConnectingInstagram(false)
         }
