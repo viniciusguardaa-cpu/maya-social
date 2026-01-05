@@ -36,48 +36,7 @@ interface HashtagGroup {
     usageCount: number
 }
 
-const mockGroups: HashtagGroup[] = [
-    {
-        id: "1",
-        name: "Marketing Digital",
-        hashtags: ["marketing", "digital", "socialmedia", "marketingdigital", "redessociais", "conteudo", "estrategia"],
-        category: "Marketing",
-        isFavorite: true,
-        usageCount: 45
-    },
-    {
-        id: "2",
-        name: "Empreendedorismo",
-        hashtags: ["empreendedorismo", "negocios", "sucesso", "empreender", "motivacao", "mindset", "carreira"],
-        category: "Business",
-        isFavorite: true,
-        usageCount: 32
-    },
-    {
-        id: "3",
-        name: "Instagram Growth",
-        hashtags: ["instagram", "instagrambrasil", "insta", "instalike", "follow", "viral", "explore"],
-        category: "Crescimento",
-        isFavorite: false,
-        usageCount: 28
-    },
-    {
-        id: "4",
-        name: "Lifestyle",
-        hashtags: ["lifestyle", "vida", "rotina", "qualidadedevida", "bemestar", "equilibrio", "mindfulness"],
-        category: "Lifestyle",
-        isFavorite: false,
-        usageCount: 15
-    },
-    {
-        id: "5",
-        name: "Reels",
-        hashtags: ["reels", "reelsviral", "reelsbrasil", "trendingreels", "reelsinstagram", "videosvirais"],
-        category: "Formato",
-        isFavorite: true,
-        usageCount: 52
-    },
-]
+const mockGroups: HashtagGroup[] = []
 
 const categories = ["Todos", "Marketing", "Business", "Crescimento", "Lifestyle", "Formato"]
 

@@ -34,55 +34,7 @@ interface ContentSlide {
     status: "pending" | "approved" | "rejected"
 }
 
-const mockSlides: ContentSlide[] = [
-    {
-        id: "1",
-        code: "MAYA_RL_12",
-        title: "Reels: 5 Dicas de Marketing Digital",
-        type: "REELS",
-        description: "Vídeo vertical com 5 dicas práticas de marketing digital para pequenas empresas. Transições dinâmicas e texto na tela.",
-        objective: "Educar e gerar autoridade",
-        cta: "Salva pra não esquecer! 🔖",
-        hashtags: ["marketing", "dicas", "digital", "negocios", "empreendedorismo"],
-        scheduledAt: "2025-01-20T10:00:00",
-        status: "pending"
-    },
-    {
-        id: "2",
-        code: "MAYA_FD_08",
-        title: "Post: Novidades do Mês de Janeiro",
-        type: "FEED",
-        description: "Post estático destacando as principais novidades e lançamentos do mês. Design clean com cores da marca.",
-        objective: "Informar e engajar",
-        cta: "Qual novidade você mais gostou? Comenta! 👇",
-        hashtags: ["novidades", "janeiro", "lancamento", "maya"],
-        scheduledAt: "2025-01-21T12:00:00",
-        status: "pending"
-    },
-    {
-        id: "3",
-        code: "MAYA_CA_05",
-        title: "Carrossel: Tendências 2025",
-        type: "CAROUSEL",
-        description: "Carrossel com 8 slides apresentando as principais tendências de marketing digital para 2025.",
-        objective: "Educar e posicionar como referência",
-        cta: "Compartilha com quem precisa ver isso! 📲",
-        hashtags: ["tendencias", "2025", "marketing", "futuro"],
-        scheduledAt: "2025-01-22T18:00:00",
-        status: "pending"
-    },
-    {
-        id: "4",
-        code: "MAYA_ST_03",
-        title: "Stories: Bastidores da Produção",
-        type: "STORIES",
-        description: "Sequência de stories mostrando o processo criativo e bastidores da equipe.",
-        objective: "Humanizar a marca",
-        cta: "Quer ver mais bastidores? Reage! ❤️",
-        hashtags: [],
-        status: "pending"
-    },
-]
+const mockSlides: ContentSlide[] = []
 
 const typeIcons: Record<string, string> = {
     FEED: "📷",
@@ -135,6 +87,25 @@ export default function PresentationPage() {
     const approvedCount = slides.filter(s => s.status === "approved").length
     const rejectedCount = slides.filter(s => s.status === "rejected").length
 
+    if (slides.length === 0) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Card className="max-w-md w-full">
+                    <CardContent className="p-12 text-center">
+                        <Play className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                        <h2 className="text-xl font-bold mb-2">Nenhum conteúdo para apresentar</h2>
+                        <p className="text-muted-foreground mb-4">
+                            Crie conteúdos e aguarde aprovação para usar o modo apresentação.
+                        </p>
+                        <Button variant="outline" asChild>
+                            <a href="/dashboard/content">Ir para Conteúdos</a>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
+
     return (
         <div className={`min-h-screen ${isFullscreen ? "fixed inset-0 z-50 bg-background" : ""}`}>
             {/* Header */}
@@ -173,12 +144,12 @@ export default function PresentationPage() {
                                 key={slide.id}
                                 onClick={() => setCurrentIndex(i)}
                                 className={`w-3 h-3 rounded-full transition-all ${i === currentIndex
-                                        ? "bg-primary scale-125"
-                                        : slide.status === "approved"
-                                            ? "bg-green-500"
-                                            : slide.status === "rejected"
-                                                ? "bg-red-500"
-                                                : "bg-muted"
+                                    ? "bg-primary scale-125"
+                                    : slide.status === "approved"
+                                        ? "bg-green-500"
+                                        : slide.status === "rejected"
+                                            ? "bg-red-500"
+                                            : "bg-muted"
                                     }`}
                             />
                         ))}

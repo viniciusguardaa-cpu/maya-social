@@ -39,23 +39,7 @@ interface Activity {
     createdAt: string
 }
 
-const mockActivities: Activity[] = [
-    { id: "1", type: "content_moved", description: "moveu conteúdo para Aprovado", user: "Ana Silva", target: "MAYA_RL_12", createdAt: "Há 5 min" },
-    { id: "2", type: "comment_added", description: "comentou em conteúdo", user: "Carlos Santos", target: "MAYA_FD_08", metadata: { comment: "Aprovado! Pode agendar." }, createdAt: "Há 15 min" },
-    { id: "3", type: "brief_generated", description: "gerou brief com IA", user: "Vinicius Garcia", target: "MAYA_CA_05", createdAt: "Há 30 min" },
-    { id: "4", type: "asset_uploaded", description: "fez upload de 3 arquivos", user: "Maria Oliveira", createdAt: "Há 1h" },
-    { id: "5", type: "content_scheduled", description: "agendou publicação", user: "Ana Silva", target: "MAYA_RL_12", metadata: { date: "17/01 às 10:00" }, createdAt: "Há 1h" },
-    { id: "6", type: "content_created", description: "criou novo conteúdo", user: "Sistema", target: "MAYA_ST_03", metadata: { type: "STORIES" }, createdAt: "Há 2h" },
-    { id: "7", type: "member_invited", description: "convidou novo membro", user: "Vinicius Garcia", metadata: { email: "joao@maya.com" }, createdAt: "Há 3h" },
-    { id: "8", type: "settings_changed", description: "atualizou configurações da marca", user: "Vinicius Garcia", createdAt: "Há 4h" },
-    { id: "9", type: "content_moved", description: "moveu conteúdo para Em Produção", user: "Maria Oliveira", target: "MAYA_FD_09", createdAt: "Há 5h" },
-    { id: "10", type: "comment_added", description: "comentou em conteúdo", user: "Ana Silva", target: "MAYA_CA_05", metadata: { comment: "Ficou ótimo!" }, createdAt: "Há 6h" },
-    { id: "11", type: "brief_generated", description: "gerou brief com IA", user: "Carlos Santos", target: "MAYA_RL_13", createdAt: "Há 8h" },
-    { id: "12", type: "asset_uploaded", description: "fez upload de 5 arquivos", user: "Maria Oliveira", createdAt: "Há 1 dia" },
-    { id: "13", type: "content_created", description: "criou 7 novos conteúdos", user: "Sistema", metadata: { count: "7" }, createdAt: "Há 1 dia" },
-    { id: "14", type: "content_moved", description: "moveu conteúdo para Publicado", user: "Ana Silva", target: "MAYA_FD_07", createdAt: "Há 2 dias" },
-    { id: "15", type: "settings_changed", description: "atualizou templates", user: "Vinicius Garcia", createdAt: "Há 2 dias" },
-]
+const mockActivities: Activity[] = []
 
 const activityConfig: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
     content_created: { icon: <FileText className="h-4 w-4" />, color: "text-blue-600", bg: "bg-blue-100" },

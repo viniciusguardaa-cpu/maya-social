@@ -44,8 +44,8 @@ export default function SettingsPage() {
     const [language, setLanguage] = useState("pt-BR")
 
     const [profile, setProfile] = useState({
-        name: user?.name || "Demo User",
-        email: user?.email || "demo@maya.com",
+        name: user?.name || "",
+        email: user?.email || "",
     })
 
     const [notifications, setNotifications] = useState<NotificationSettings>({
