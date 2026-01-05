@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuthStore } from "@/lib/store"
+import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import {
     User,
     Bell,
@@ -24,8 +26,12 @@ import {
     Mail,
     Lock,
     LogOut,
-    Trash2
+    Trash2,
+    Instagram,
+    Link2,
+    Unlink
 } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 interface NotificationSettings {
     email: boolean
@@ -37,16 +43,78 @@ interface NotificationSettings {
 }
 
 export default function SettingsPage() {
-    const { user, logout } = useAuthStore()
+    const { user, logout, currentOrg, currentBrand } = useAuthStore()
+    const searchParams = useSearchParams()
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [theme, setTheme] = useState<"light" | "dark" | "system">("system")
     const [language, setLanguage] = useState("pt-BR")
+    const [instagramStatus, setInstagramStatus] = useState<{ connected: boolean; username?: string } | null>(null)
+    const [connectingInstagram, setConnectingInstagram] = useState(false)
 
     const [profile, setProfile] = useState({
         name: user?.name || "",
         email: user?.email || "",
     })
+
+    // Check for Instagram callback params
+    useEffect(() => {
+        const igStatus = searchParams.get('instagram')
+        const username = searchParams.get('username')
+        const message = searchParams.get('message')
+
+        if (igStatus === 'success' && username) {
+            toast.success(`Instagram @${username} conectado com sucesso!`)
+            setInstagramStatus({ connected: true, username })
+        } else if (igStatus === 'error') {
+            toast.error(message || 'Erro ao conectar Instagram')
+        }
+    }, [searchParams])
+
+    // Fetch Instagram status
+    useEffect(() => {
+        const fetchInstagramStatus = async () => {
+            if (!currentOrg || !currentBrand) return
+            try {
+                const response = await api.get(
+                    `/organizations/${currentOrg.id}/brands/${currentBrand.id}/instagram/status`
+                )
+                setInstagramStatus(response.data)
+            } catch (error) {
+                console.error('Failed to fetch Instagram status:', error)
+            }
+        }
+        fetchInstagramStatus()
+    }, [currentOrg, currentBrand])
+
+    const handleConnectInstagram = async () => {
+        if (!currentOrg || !currentBrand) return
+        setConnectingInstagram(true)
+        try {
+            const response = await api.get(
+                `/organizations/${currentOrg.id}/brands/${currentBrand.id}/instagram/auth-url`
+            )
+            window.location.href = response.data.url
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Erro ao iniciar conexão')
+            setConnectingInstagram(false)
+        }
+    }
+
+    const handleDisconnectInstagram = async () => {
+        if (!currentOrg || !currentBrand) return
+        if (!confirm('Tem certeza que deseja desconectar o Instagram?')) return
+
+        try {
+            await api.delete(
+                `/organizations/${currentOrg.id}/brands/${currentBrand.id}/instagram/disconnect`
+            )
+            setInstagramStatus({ connected: false })
+            toast.success('Instagram desconectado')
+        } catch (error: any) {
+            toast.error('Erro ao desconectar')
+        }
+    }
 
     const [notifications, setNotifications] = useState<NotificationSettings>({
         email: true,
@@ -245,6 +313,57 @@ export default function SettingsPage() {
                             </button>
                         </div>
                     ))}
+                </CardContent>
+            </Card>
+
+            {/* Integrations */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <Link2 className="h-5 w-5" />
+                        Integrações
+                    </CardTitle>
+                    <CardDescription>Conecte suas redes sociais</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center">
+                                <Instagram className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                                <p className="font-medium">Instagram Business</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {instagramStatus?.connected
+                                        ? `@${instagramStatus.username}`
+                                        : 'Conecte para publicar diretamente'}
+                                </p>
+                            </div>
+                        </div>
+                        {instagramStatus?.connected ? (
+                            <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-green-600 border-green-600">
+                                    Conectado
+                                </Badge>
+                                <Button variant="ghost" size="sm" onClick={handleDisconnectInstagram}>
+                                    <Unlink className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                onClick={handleConnectInstagram}
+                                disabled={connectingInstagram}
+                            >
+                                {connectingInstagram ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Instagram className="h-4 w-4 mr-2" />
+                                )}
+                                Conectar
+                            </Button>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
 
