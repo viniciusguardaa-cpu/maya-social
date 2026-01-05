@@ -14,8 +14,7 @@ export class InstagramController {
   constructor(private instagramService: InstagramService) {}
 
   @Get('organizations/:orgId/brands/:brandId/instagram/auth-url')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OWNER, Role.ADMIN)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get Instagram OAuth authorization URL' })
   getAuthUrl(@Param('brandId') brandId: string) {
@@ -71,22 +70,12 @@ export class InstagramController {
   }
 
   @Get('organizations/:orgId/brands/:brandId/instagram/status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get Instagram connection status' })
   async getStatus(@Param('brandId') brandId: string) {
     const connection = await this.instagramService.getConnection(brandId);
-    
-    if (!connection) {
-      return { connected: false };
-    }
-
-    return {
-      connected: true,
-      username: connection.username,
-      connectedAt: connection.connectedAt,
-    };
+    return connection || { connected: false };
   }
 
   @Delete('organizations/:orgId/brands/:brandId/instagram/disconnect')
