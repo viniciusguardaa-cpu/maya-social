@@ -40,8 +40,10 @@ export class InstagramService {
     }
 
     const scope = [
+      'email',
       'public_profile',
-      'instagram_basic',
+      'pages_read_engagement',
+      'pages_manage_metadata',
     ].join(',');
 
     const state = Buffer.from(JSON.stringify({ brandId })).toString('base64');
