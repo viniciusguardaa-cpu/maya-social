@@ -4,12 +4,28 @@ import { AuditService } from '../audit/audit.service';
 import { ContentType, ContentStatus, Recurrence } from '@prisma/client';
 import { BatchGenerationService, BatchGenerationOptions } from './batch-generation.service';
 
+export interface ThemeConfig {
+  id: string;
+  name: string;
+  objective: string;
+  format: string;
+}
+
+export interface ContentTypeConfig {
+  type: string;
+  frequency: number;
+  days: number[];
+  time: string;
+  themes: ThemeConfig[];
+}
+
 export interface GenerateMonthPlanDto {
   brandId: string;
   year: number;
   month: number;
   preview?: boolean;
   autoGenerate?: BatchGenerationOptions;
+  config?: ContentTypeConfig[];
 }
 
 export interface PlanPreviewItem {
@@ -172,6 +188,66 @@ export class CalendarService {
     return contentItems;
   }
 
+  private buildContentItemsFromConfig(
+    brand: { id: string; slug: string },
+    config: ContentTypeConfig[],
+    year: number,
+    month: number,
+    calendarMonthId?: string,
+  ) {
+    const contentItems: any[] = [];
+    const counters: Record<string, number> = {};
+
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+
+      for (const typeConfig of config) {
+        if (typeConfig.days.includes(dayOfWeek)) {
+          const key = typeConfig.type;
+          counters[key] = (counters[key] || 0) + 1;
+
+          // Get rotating theme based on counter
+          const themeIndex = (counters[key] - 1) % (typeConfig.themes.length || 1);
+          const theme = typeConfig.themes[themeIndex] || { name: typeConfig.type, objective: '', format: 'photo' };
+
+          const [hours, minutes] = typeConfig.time.split(':').map(Number);
+          const scheduledAt = new Date(d);
+          scheduledAt.setHours(hours, minutes, 0, 0);
+
+          const code = this.generateContentCode(
+            brand.slug,
+            year,
+            month,
+            typeConfig.type as ContentType,
+            counters[key],
+            theme.name.substring(0, 10).replace(/\s/g, ''),
+          );
+
+          contentItems.push({
+            brandId: brand.id,
+            calendarMonthId,
+            code,
+            type: typeConfig.type,
+            status: ContentStatus.PLANNED,
+            scheduledAt,
+            templateName: theme.name,
+            category: theme.objective,
+            metadata: {
+              theme: theme.name,
+              objective: theme.objective,
+              format: theme.format,
+            },
+          });
+        }
+      }
+    }
+
+    return contentItems;
+  }
+
   async previewMonthPlan(data: GenerateMonthPlanDto): Promise<PlanPreviewItem[]> {
     const brand = await this.prisma.brand.findUnique({
       where: { id: data.brandId },
@@ -216,8 +292,6 @@ export class CalendarService {
       throw new BadRequestException('Calendar month already exists. Delete or update existing plan.');
     }
 
-    const templates = await this.getActiveTemplates(data.brandId, userId);
-
     const calendarMonth = await this.prisma.calendarMonth.create({
       data: {
         brandId: data.brandId,
@@ -227,9 +301,17 @@ export class CalendarService {
       },
     });
 
-    const contentItems = this.buildContentItems(brand, templates, data.year, data.month, calendarMonth.id);
+    let contentItems: any[];
 
-    const itemsToCreate = contentItems.map(({ templateName, category, ...item }) => item);
+    // Use custom config if provided, otherwise use templates
+    if (data.config && data.config.length > 0) {
+      contentItems = this.buildContentItemsFromConfig(brand, data.config, data.year, data.month, calendarMonth.id);
+    } else {
+      const templates = await this.getActiveTemplates(data.brandId, userId);
+      contentItems = this.buildContentItems(brand, templates, data.year, data.month, calendarMonth.id);
+    }
+
+    const itemsToCreate = contentItems.map(({ templateName, category, metadata, ...item }) => item);
 
     await this.prisma.contentItem.createMany({
       data: itemsToCreate,

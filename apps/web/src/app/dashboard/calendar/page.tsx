@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GanttChart } from "@/components/gantt-chart"
 import { ContentDetailModal } from "@/components/content-detail-modal"
+import { CalendarConfigModal } from "@/components/calendar-config-modal"
 import {
     ChevronLeft,
     ChevronRight,
@@ -110,6 +111,7 @@ export default function CalendarPage() {
     const [viewMode, setViewMode] = useState<ViewMode>("calendar")
     const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
     const [modalOpen, setModalOpen] = useState(false)
+    const [configModalOpen, setConfigModalOpen] = useState(false)
 
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth() + 1
@@ -135,50 +137,21 @@ export default function CalendarPage() {
         }
     }
 
-    const generateMonth = async () => {
+    const generateMonth = async (config?: any[]) => {
         if (!currentOrg || !currentBrand) return
 
         setGenerating(true)
+        setConfigModalOpen(false)
         try {
             await api.post(
                 `/organizations/${currentOrg.id}/brands/${currentBrand.id}/calendar/generate`,
-                { year, month }
+                { year, month, config }
             )
             await fetchCalendar()
             toast.success(`Plano de ${format(currentMonth, "MMMM yyyy", { locale: ptBR })} gerado com sucesso!`)
         } catch (error: any) {
             console.error("Failed to generate month:", error)
-
-            if (error.response?.status === 400 && error.response?.data?.message?.includes('No templates')) {
-                const shouldCreateTemplates = window.confirm(
-                    'Nenhum template configurado!\n\n' +
-                    'Deseja criar templates padrão agora?\n\n' +
-                    'Isso vai criar 6 templates básicos (Feed, Reels, Stories) ' +
-                    'distribuídos ao longo da semana.'
-                )
-
-                if (shouldCreateTemplates) {
-                    try {
-                        await api.post(
-                            `/organizations/${currentOrg.id}/brands/${currentBrand.id}/templates/defaults`
-                        )
-
-                        await api.post(
-                            `/organizations/${currentOrg.id}/brands/${currentBrand.id}/calendar/generate`,
-                            { year, month }
-                        )
-                        await fetchCalendar()
-                        toast.success('Templates criados e mês gerado!')
-                    } catch (err) {
-                        console.error("Failed to create templates or generate month:", err)
-                        toast.error('Erro ao criar templates. Tente novamente.')
-                    }
-                } else {
-                    toast.warning('Configure os templates primeiro em Templates → Criar Templates Padrão')
-                }
-            } else {
-                toast.error('Erro ao gerar mês. Verifique o console.')
-            }
+            toast.error('Erro ao gerar mês. Verifique o console.')
         } finally {
             setGenerating(false)
         }
@@ -249,7 +222,7 @@ export default function CalendarPage() {
                         Atualizar
                     </Button>
                     {!calendarData && !loading && (
-                        <Button size="sm" onClick={generateMonth} disabled={generating}>
+                        <Button size="sm" onClick={() => setConfigModalOpen(true)} disabled={generating}>
                             {generating ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : (
@@ -362,6 +335,14 @@ export default function CalendarPage() {
                 open={modalOpen}
                 onOpenChange={setModalOpen}
                 onUpdate={fetchCalendar}
+            />
+
+            {/* Calendar Config Modal */}
+            <CalendarConfigModal
+                open={configModalOpen}
+                onOpenChange={setConfigModalOpen}
+                onGenerate={generateMonth}
+                generating={generating}
             />
         </div>
     )

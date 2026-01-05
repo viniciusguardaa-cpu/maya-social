@@ -1,6 +1,48 @@
-import { IsBoolean, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsBoolean, IsOptional, IsNumber, Min, Max, IsArray, IsString, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+
+export class ThemeConfigDto {
+  @ApiProperty({ description: 'Theme ID' })
+  @IsString()
+  id: string;
+
+  @ApiProperty({ description: 'Theme name', example: 'Posicionamento / Lifestyle' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Content objective', example: 'Construção de marca' })
+  @IsString()
+  objective: string;
+
+  @ApiProperty({ description: 'Content format', example: 'photo' })
+  @IsString()
+  format: string;
+}
+
+export class ContentTypeConfigDto {
+  @ApiProperty({ description: 'Content type', example: 'FEED' })
+  @IsString()
+  type: string;
+
+  @ApiProperty({ description: 'Posts per week', example: 3 })
+  @IsNumber()
+  frequency: number;
+
+  @ApiProperty({ description: 'Days of week (0=Sun, 6=Sat)', example: [1, 3, 5] })
+  @IsArray()
+  days: number[];
+
+  @ApiProperty({ description: 'Post time', example: '12:00' })
+  @IsString()
+  time: string;
+
+  @ApiProperty({ description: 'Rotating themes', type: [ThemeConfigDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ThemeConfigDto)
+  themes: ThemeConfigDto[];
+}
 
 export class BatchGenerationOptionsDto {
   @ApiProperty({
@@ -57,6 +99,17 @@ export class GenerateMonthPlanDto {
   })
   @IsOptional()
   autoGenerate?: BatchGenerationOptionsDto;
+
+  @ApiProperty({
+    description: 'Custom configuration for content types, frequencies and themes',
+    required: false,
+    type: [ContentTypeConfigDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ContentTypeConfigDto)
+  config?: ContentTypeConfigDto[];
 }
 
 export class BatchGenerateSelectedDto {
