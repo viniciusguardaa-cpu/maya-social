@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Query, Param, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Query, Param, Res, UseGuards, Body } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { InstagramService } from './instagram.service';
@@ -12,6 +12,22 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 @Controller()
 export class InstagramController {
   constructor(private instagramService: InstagramService) {}
+
+  @Post('organizations/:orgId/brands/:brandId/instagram/connect')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Connect Instagram with manual token' })
+  async connectWithToken(
+    @Param('brandId') brandId: string,
+    @Body() body: { accessToken: string },
+  ) {
+    try {
+      const result = await this.instagramService.connectWithToken(brandId, body.accessToken);
+      return { success: true, username: result.username };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
 
   @Get('organizations/:orgId/brands/:brandId/instagram/auth-url')
   @UseGuards(JwtAuthGuard)

@@ -33,6 +33,40 @@ export class InstagramService {
       'https://midiaapi-production.up.railway.app/api/auth/instagram/callback';
   }
 
+  // Connect Instagram with manual token
+  async connectWithToken(brandId: string, accessToken: string): Promise<{ username: string; igAccountId: string }> {
+    if (!accessToken) {
+      throw new Error('Access token is required');
+    }
+
+    try {
+      // Get Instagram user info
+      const userUrl = `https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`;
+      const userResponse = await fetch(userUrl);
+      const userData = await userResponse.json();
+
+      if (userData.error) {
+        throw new Error(userData.error.message || 'Failed to get Instagram user info');
+      }
+
+      // Save connection
+      await this.saveConnection(brandId, {
+        accessToken,
+        igAccountId: userData.id,
+        pageId: userData.id,
+        username: userData.username,
+      });
+
+      return {
+        username: userData.username,
+        igAccountId: userData.id,
+      };
+    } catch (error: any) {
+      this.logger.error('Error connecting with token:', error);
+      throw error;
+    }
+  }
+
   // Generate OAuth URL for user to authorize
   getAuthorizationUrl(brandId: string): string {
     if (!brandId) {
