@@ -1,5 +1,6 @@
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsNumber, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class BatchGenerationOptionsDto {
   @ApiProperty({
@@ -35,12 +36,18 @@ export class GenerateMonthPlanDto {
     description: 'Year for the calendar month',
     example: 2025,
   })
+  @IsNumber()
+  @Type(() => Number)
   year: number;
 
   @ApiProperty({
     description: 'Month for the calendar (1-12)',
     example: 1,
   })
+  @IsNumber()
+  @Min(1)
+  @Max(12)
+  @Type(() => Number)
   month: number;
 
   @ApiProperty({
