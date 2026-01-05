@@ -125,6 +125,24 @@ export function ContentDetailModal({ content, open, onOpenChange, onUpdate }: Co
         }
     }
 
+    const handleGenerateArt = async () => {
+        if (!currentOrg || !currentBrand) return
+        setLoading(true)
+        try {
+            const response = await api.post(
+                `/organizations/${currentOrg.id}/brands/${currentBrand.id}/content/${content.id}/generate-art`
+            )
+            toast.success("Arte gerada com IA! 🎨")
+            console.log("AI Response:", response.data)
+            onUpdate?.()
+        } catch (error: any) {
+            console.error("Failed to generate art:", error)
+            toast.error(error.response?.data?.message || "Erro ao gerar arte")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const handleMoveStatus = async () => {
         if (!currentOrg || !currentBrand || !nextStatus) return
         setLoading(true)
@@ -307,6 +325,10 @@ export function ContentDetailModal({ content, open, onOpenChange, onUpdate }: Co
                         <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Brief</h3>
                             <div className="flex gap-2">
+                                <Button variant="default" size="sm" onClick={handleGenerateArt} disabled={loading}>
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ImageIcon className="h-4 w-4 mr-1" />}
+                                    Gerar Arte IA
+                                </Button>
                                 <Button variant="outline" size="sm" onClick={handleGenerateBrief} disabled={loading}>
                                     {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
                                     Gerar Brief IA

@@ -148,6 +148,16 @@ export class ContentController {
     return this.contentService.regenerateBrief(briefId, user.id);
   }
 
+  @Post(':contentId/generate-art')
+  @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER)
+  @ApiOperation({ summary: 'Generate art/image using AI (DALL-E)' })
+  async generateArt(
+    @Param('contentId') contentId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.contentService.generateArt(contentId, user.id);
+  }
+
   @Post(':contentId/move-to')
   @Roles(Role.OWNER, Role.ADMIN, Role.MANAGER, Role.PRODUCER)
   @ApiOperation({ summary: 'Move content to a new status (with validation)' })

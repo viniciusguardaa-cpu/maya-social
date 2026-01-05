@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { AiService } from '../ai/ai.service';
+import { OpenAIService } from '../maya-social/openai.service';
 import { ContentStatus, ContentType } from '@prisma/client';
 
 export interface CreateBriefDto {
@@ -29,6 +30,7 @@ export class ContentService {
     private prisma: PrismaService,
     private auditService: AuditService,
     private aiService: AiService,
+    private openaiService: OpenAIService,
   ) {}
 
   async findById(id: string) {
@@ -490,5 +492,98 @@ export class ContentService {
     }
 
     return { success: results, errors };
+  }
+
+  async generateArt(contentItemId: string, userId: string) {
+    const item = await this.prisma.contentItem.findUnique({
+      where: { id: contentItemId },
+      include: {
+        brand: true,
+        brief: true,
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundException('Content item not found');
+    }
+
+    if (!item.brief) {
+      throw new BadRequestException('Brief is required to generate art. Create a brief first.');
+    }
+
+    // Build briefing for OpenAI
+    const briefing = {
+      postType: this.mapContentTypeToPostType(item.type),
+      objective: item.brief.objective || 'engagement',
+      mainIdea: item.brief.title,
+      copy: {
+        headline: item.brief.title,
+        headlineAuto: false,
+        subheadline: item.brief.promise || item.brief.caption?.substring(0, 150) || item.brief.title,
+        cta: item.brief.cta || null,
+        link: null,
+        whatsapp: null,
+      },
+      visual: {
+        style: 'auto',
+        tone: 'auto',
+        colors: item.brand.primaryColor ? [item.brand.primaryColor] : null,
+        fontStyle: 'auto',
+      },
+      assets: {
+        hasLogo: !!item.brand.logoUrl,
+        logoName: item.brand.logoUrl ? 'brand-logo' : null,
+        imagesCount: 0,
+        imageNames: [],
+      },
+      restrictions: null,
+    };
+
+    // Generate creative content with OpenAI
+    const aiResponse = await this.openaiService.generateCreativeContent(briefing);
+
+    // Update brief with AI generated content
+    const updatedBrief = await this.prisma.brief.update({
+      where: { id: item.brief.id },
+      data: {
+        caption: aiResponse.copy?.headline 
+          ? `${aiResponse.copy.headline}\n\n${aiResponse.copy.subheadline || ''}\n\n${aiResponse.copy.cta || ''}`
+          : item.brief.caption,
+      },
+    });
+
+    // Update content status
+    await this.prisma.contentItem.update({
+      where: { id: contentItemId },
+      data: { status: ContentStatus.IN_PRODUCTION },
+    });
+
+    await this.auditService.log({
+      userId,
+      action: 'ART_GENERATED_AI',
+      entity: 'ContentItem',
+      entityId: contentItemId,
+      newData: { 
+        imagePrompt: aiResponse.imagePrompt,
+        design: aiResponse.design,
+      },
+    });
+
+    return {
+      contentItem: item,
+      aiResponse,
+      brief: updatedBrief,
+    };
+  }
+
+  private mapContentTypeToPostType(contentType: ContentType): string {
+    const mapping: Record<ContentType, string> = {
+      FEED: 'feed_single',
+      CAROUSEL: 'feed_carousel',
+      REELS: 'reels',
+      STORIES: 'stories',
+      AD: 'ad',
+    };
+    return mapping[contentType] || 'feed_single';
   }
 }
