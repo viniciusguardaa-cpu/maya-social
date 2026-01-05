@@ -39,7 +39,7 @@ export class InstagramService {
       throw new Error('Brand ID is required');
     }
 
-    const scope = 'email,public_profile,pages_show_list';
+    const scope = 'email,public_profile';
 
     const state = Buffer.from(JSON.stringify({ brandId })).toString('base64');
 
