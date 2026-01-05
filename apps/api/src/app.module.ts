@@ -13,6 +13,7 @@ import { AuditModule } from './audit/audit.module';
 import { TemplatesModule } from './templates/templates.module';
 import { PublicationsModule } from './publications/publications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { InstagramModule } from './instagram/instagram.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     TemplatesModule,
     PublicationsModule,
     AnalyticsModule,
+    InstagramModule,
   ],
 })
 export class AppModule {}

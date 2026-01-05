@@ -115,13 +115,14 @@ model Brand {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  integrations     Integration[]
-  calendarMonths   CalendarMonth[]
-  contentItems     ContentItem[]
-  assets           Asset[]
-  conversations    Conversation[]
-  contentTemplates ContentTemplate[]
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  integrations      Integration[]
+  calendarMonths    CalendarMonth[]
+  contentItems      ContentItem[]
+  assets            Asset[]
+  conversations     Conversation[]
+  contentTemplates  ContentTemplate[]
+  socialConnections SocialConnection[]
 
   @@unique([organizationId, slug])
   @@map("brands")
@@ -603,4 +604,26 @@ model SocialAnalytics {
   
   @@index([outputId])
   @@map("social_analytics")
+}
+
+model SocialConnection {
+  id              String   @id @default(cuid())
+  brandId         String
+  platform        String   // INSTAGRAM, FACEBOOK, TIKTOK, etc
+  accessToken     String   @db.Text
+  refreshToken    String?  @db.Text
+  platformUserId  String?
+  platformPageId  String?
+  username        String?
+  isActive        Boolean  @default(true)
+  connectedAt     DateTime @default(now())
+  expiresAt       DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  
+  @@index([brandId, platform])
+  @@map("social_connections")
 }
