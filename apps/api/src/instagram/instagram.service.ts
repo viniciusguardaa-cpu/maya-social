@@ -39,16 +39,11 @@ export class InstagramService {
       throw new Error('Brand ID is required');
     }
 
-    const scope = [
-      'email',
-      'public_profile',
-      'pages_read_engagement',
-      'pages_manage_metadata',
-    ].join(',');
+    const scope = 'email,public_profile,pages_show_list';
 
     const state = Buffer.from(JSON.stringify({ brandId })).toString('base64');
 
-    return `https://www.facebook.com/v18.0/dialog/oauth?` +
+    return `https://www.facebook.com/v20.0/dialog/oauth?` +
       `client_id=${this.appId}` +
       `&redirect_uri=${encodeURIComponent(this.redirectUri)}` +
       `&scope=${scope}` +
