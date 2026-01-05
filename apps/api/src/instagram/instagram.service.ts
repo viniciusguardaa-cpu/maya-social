@@ -35,6 +35,10 @@ export class InstagramService {
 
   // Generate OAuth URL for user to authorize
   getAuthorizationUrl(brandId: string): string {
+    if (!brandId) {
+      throw new Error('Brand ID is required');
+    }
+
     const scope = [
       'public_profile',
       'pages_show_list',
